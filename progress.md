@@ -15,10 +15,13 @@
 * [x] Enabled 5-DOF structural IK by injecting `position_only_ik: True` into `kinematics.yaml`, solving Interactive Marker snap-back singularities. 
 * [x] Handled floor crashing issues by demonstrating how to use "Scene Objects" in RViz for virtual collision boxes.
 * [x] Created a comprehensive breakdown guide of debugging cases in `MoveIt_Simulation_Troubleshooting.md`.
+* [x] Firmly rooted the robotic arm to the Gazebo environment by injecting a `<link name="world"/>` fix directly to `base_link` inside `robotic_arm.xacro`.
+* [x] Upgraded `robotic_arm.gazebo` to use modern `gz_ros2_control::GazeboSimROS2ControlPlugin`.
+* [x] Connected MoveIt 2 to Gazebo Harmonic by explicitly providing a `use_fake_hardware:=false` mapping inside `moveit_gazebo.launch.py`.
+* [x] Fixed RViz timer mismatch flickering and TF jumps by configuring `use_sim_time: true` across all Controller Managers and Launch parameters.
 
 ## Current Issues & Roadblocks
 * [ ] **Ogre Material Warnings:** The legacy material "Gazebo/Silver" generates warnings in Gazebo Harmonic. This isn't fatal as it falls back to default, but eventually, standard modern PBR materials should be applied.
 
 ## Next Steps
-* [ ] Create real Gazebo-compatible ROS 2 controllers (`joint_state_broadcaster`, `joint_trajectory_controller`) mapping in a `controllers.yaml` file so Gazebo physics mimics the RViz trajectory plans directly.
-* [ ] Integrate Controller execution nodes into the simulation's launch pipeline.
+* [ ] Proceed to Phase 2: Integrate MediaPipe live tracking directly into MoveIt 2's action server to control the simulation dynamically from the webcam.

@@ -11,6 +11,14 @@
   <xacro:include filename="$(find robotic_arm_description)/urdf/robotic_arm.gazebo" />
 </xacro:if>
 
+<link name="world"/>
+
+<joint name="world_fixed" type="fixed">
+  <origin xyz="0 0 0" rpy="0 0 0"/>
+  <parent link="world"/>
+  <child link="base_link"/>
+</joint>
+
 <link name="base_link">
   <inertial>
     <origin xyz="-0.0004708423328156958 -0.010037624526809919 0.033163866275274546" rpy="0 0 0"/>
