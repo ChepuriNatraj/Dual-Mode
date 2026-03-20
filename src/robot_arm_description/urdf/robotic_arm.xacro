@@ -30,7 +30,7 @@
     <geometry>
       <mesh filename="package://robotic_arm_description/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
     </geometry>
-    <material name="silver"/>
+    <material name="dark_grey"/>
   </visual>
   <collision>
     <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -51,7 +51,7 @@
     <geometry>
       <mesh filename="package://robotic_arm_description/meshes/link_1_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
-    <material name="silver"/>
+    <material name="orange"/>
   </visual>
   <collision>
     <origin xyz="-0.0 0.029745 -0.0771" rpy="0 0 0"/>
@@ -72,7 +72,7 @@
     <geometry>
       <mesh filename="package://robotic_arm_description/meshes/link_2_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
-    <material name="silver"/>
+    <material name="orange"/>
   </visual>
   <collision>
     <origin xyz="-0.0336 0.039745 -0.090845" rpy="0 0 0"/>
@@ -93,7 +93,7 @@
     <geometry>
       <mesh filename="package://robotic_arm_description/meshes/link_3_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
-    <material name="silver"/>
+    <material name="orange"/>
   </visual>
   <collision>
     <origin xyz="-0.0336 0.039743 -0.201338" rpy="0 0 0"/>
@@ -114,7 +114,7 @@
     <geometry>
       <mesh filename="package://robotic_arm_description/meshes/link_4_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
-    <material name="silver"/>
+    <material name="dark_grey"/>
   </visual>
   <collision>
     <origin xyz="-0.033601 0.170236 -0.201338" rpy="0 0 0"/>
@@ -135,7 +135,7 @@
     <geometry>
       <mesh filename="package://robotic_arm_description/meshes/link_5_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
-    <material name="silver"/>
+    <material name="dark_grey"/>
   </visual>
   <collision>
     <origin xyz="-0.018601 0.240982 -0.201339" rpy="0 0 0"/>
@@ -162,7 +162,7 @@
     <geometry>
       <mesh filename="package://robotic_arm_description/meshes/Gripper_Link_v1__1__1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
-    <material name="silver"/>
+    <material name="black"/>
   </visual>
   <collision>
     <origin xyz="-0.023127 0.286587 -0.205839" rpy="0 0 0"/>
@@ -189,7 +189,7 @@
     <geometry>
       <mesh filename="package://robotic_arm_description/meshes/Gripper_Link_v1_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
-    <material name="silver"/>
+    <material name="black"/>
   </visual>
   <collision>
     <origin xyz="-0.014122 0.286592 -0.205839" rpy="0 0 0"/>
@@ -210,7 +210,7 @@
     <geometry>
       <mesh filename="package://robotic_arm_description/meshes/GripperFinger_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
-    <material name="silver"/>
+    <material name="black"/>
   </visual>
   <collision>
     <origin xyz="-0.014122 0.316592 -0.205839" rpy="0 0 0"/>
@@ -231,7 +231,7 @@
     <geometry>
       <mesh filename="package://robotic_arm_description/meshes/GripperFinger2_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
-    <material name="silver"/>
+    <material name="black"/>
   </visual>
   <collision>
     <origin xyz="-0.023127 0.316587 -0.205839" rpy="0 0 0"/>
@@ -252,7 +252,7 @@
     <geometry>
       <mesh filename="package://robotic_arm_description/meshes/gripper_link_gear1_v1_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
-    <material name="silver"/>
+    <material name="black"/>
   </visual>
   <collision>
     <origin xyz="-0.03193 0.266281 -0.205839" rpy="0 0 0"/>

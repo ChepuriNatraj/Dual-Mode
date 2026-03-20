@@ -9,7 +9,13 @@
   </plugin>
 </gazebo>
 <gazebo reference="base_link">
-  <material>${body_color}</material>
+  <visual>
+    <material>
+      <ambient>0.2 0.2 0.2 1.0</ambient>
+      <diffuse>0.2 0.2 0.2 1.0</diffuse>
+      <specular>0.1 0.1 0.1 1.0</specular>
+    </material>
+  </visual>
   <mu1>0.2</mu1>
   <mu2>0.2</mu2>
   <selfCollide>true</selfCollide>
@@ -17,70 +23,130 @@
 </gazebo>
 
 <gazebo reference="link_1_1">
-  <material>${body_color}</material>
+  <visual>
+    <material>
+      <ambient>1.0 0.42 0.04 1.0</ambient>
+      <diffuse>1.0 0.42 0.04 1.0</diffuse>
+      <specular>0.1 0.1 0.1 1.0</specular>
+    </material>
+  </visual>
   <mu1>0.2</mu1>
   <mu2>0.2</mu2>
   <selfCollide>true</selfCollide>
 </gazebo>
 
 <gazebo reference="link_2_1">
-  <material>${body_color}</material>
+  <visual>
+    <material>
+      <ambient>1.0 0.42 0.04 1.0</ambient>
+      <diffuse>1.0 0.42 0.04 1.0</diffuse>
+      <specular>0.1 0.1 0.1 1.0</specular>
+    </material>
+  </visual>
   <mu1>0.2</mu1>
   <mu2>0.2</mu2>
   <selfCollide>true</selfCollide>
 </gazebo>
 
 <gazebo reference="link_3_1">
-  <material>${body_color}</material>
+  <visual>
+    <material>
+      <ambient>1.0 0.42 0.04 1.0</ambient>
+      <diffuse>1.0 0.42 0.04 1.0</diffuse>
+      <specular>0.1 0.1 0.1 1.0</specular>
+    </material>
+  </visual>
   <mu1>0.2</mu1>
   <mu2>0.2</mu2>
   <selfCollide>true</selfCollide>
 </gazebo>
 
 <gazebo reference="link_4_1">
-  <material>${body_color}</material>
+  <visual>
+    <material>
+      <ambient>0.2 0.2 0.2 1.0</ambient>
+      <diffuse>0.2 0.2 0.2 1.0</diffuse>
+      <specular>0.1 0.1 0.1 1.0</specular>
+    </material>
+  </visual>
   <mu1>0.2</mu1>
   <mu2>0.2</mu2>
   <selfCollide>true</selfCollide>
 </gazebo>
 
 <gazebo reference="link_5_1">
-  <material>${body_color}</material>
+  <visual>
+    <material>
+      <ambient>0.2 0.2 0.2 1.0</ambient>
+      <diffuse>0.2 0.2 0.2 1.0</diffuse>
+      <specular>0.1 0.1 0.1 1.0</specular>
+    </material>
+  </visual>
   <mu1>0.2</mu1>
   <mu2>0.2</mu2>
   <selfCollide>true</selfCollide>
 </gazebo>
 
 <gazebo reference="Gripper_Link_v1__1__1">
-  <material>${body_color}</material>
+  <visual>
+    <material>
+      <ambient>0.05 0.05 0.05 1.0</ambient>
+      <diffuse>0.05 0.05 0.05 1.0</diffuse>
+      <specular>0.1 0.1 0.1 1.0</specular>
+    </material>
+  </visual>
   <mu1>0.2</mu1>
   <mu2>0.2</mu2>
   <selfCollide>true</selfCollide>
 </gazebo>
 
 <gazebo reference="Gripper_Link_v1_1">
-  <material>${body_color}</material>
+  <visual>
+    <material>
+      <ambient>0.05 0.05 0.05 1.0</ambient>
+      <diffuse>0.05 0.05 0.05 1.0</diffuse>
+      <specular>0.1 0.1 0.1 1.0</specular>
+    </material>
+  </visual>
   <mu1>0.2</mu1>
   <mu2>0.2</mu2>
   <selfCollide>true</selfCollide>
 </gazebo>
 
 <gazebo reference="GripperFinger_1">
-  <material>${body_color}</material>
+  <visual>
+    <material>
+      <ambient>0.05 0.05 0.05 1.0</ambient>
+      <diffuse>0.05 0.05 0.05 1.0</diffuse>
+      <specular>0.1 0.1 0.1 1.0</specular>
+    </material>
+  </visual>
   <mu1>0.2</mu1>
   <mu2>0.2</mu2>
   <selfCollide>true</selfCollide>
 </gazebo>
 
 <gazebo reference="GripperFinger2_1">
-  <material>${body_color}</material>
+  <visual>
+    <material>
+      <ambient>0.05 0.05 0.05 1.0</ambient>
+      <diffuse>0.05 0.05 0.05 1.0</diffuse>
+      <specular>0.1 0.1 0.1 1.0</specular>
+    </material>
+  </visual>
   <mu1>0.2</mu1>
   <mu2>0.2</mu2>
   <selfCollide>true</selfCollide>
 </gazebo>
 
 <gazebo reference="Gripper_Link_Gear#1_v1_1">
-  <material>${body_color}</material>
+  <visual>
+    <material>
+      <ambient>0.05 0.05 0.05 1.0</ambient>
+      <diffuse>0.05 0.05 0.05 1.0</diffuse>
+      <specular>0.1 0.1 0.1 1.0</specular>
+    </material>
+  </visual>
   <mu1>0.2</mu1>
   <mu2>0.2</mu2>
   <selfCollide>true</selfCollide>

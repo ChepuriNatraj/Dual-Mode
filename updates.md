@@ -9,7 +9,8 @@
 * Resolved Issue: Changed Gazebo Harmonic physics engine to `gz-physics-bullet-featherstone-plugin` to correctly support URDF `<mimic>` joints (Dart engine lacks mimic support).
 * Resolved Issue: Fixed mesh loading in Gazebo by converting `package://` URIs to `model://` in `robotic_arm.xacro` and correctly exporting the workspace install path.
 * Completed Task: Modernized `<ros2_control>` tags in `robotic_arm.trans`, successfully isolating passive mimic joints from active driver joints.
-* Discovered Issue: Gazebo throws warnings for legacy Ogre `Gazebo/Silver` materials. Not a fatal error (Harmonic uses defaults), but good to note.
+* Resolved Issue: Gazebo throwing warnings for legacy Ogre `Gazebo/Silver` materials fixed by programmatically adding native Harmonic PBR `<ambient>`/`<diffuse>` blocks.
+* Completed Task: Colorized the robot model across RViz & Gazebo (Dark Grey base, Orange arm, Black gripper).
 * Resolved Issue: MoveIt 2 demo threw a parsing error (`'NoneType' object is not subscriptable`) because `config/initial_positions.yaml` was empty.
 * Completed Task: Wrote a base `initial_positions.yaml` file so the MoveIt 2 Setup Assistant correctly parses `ros2_control.xacro`. 
 * Next Task: Implement real `controllers.yaml` integration with Gazebo if required, mapping the physical trajectory bounds.

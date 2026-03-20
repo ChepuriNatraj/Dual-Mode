@@ -19,9 +19,11 @@
 * [x] Upgraded `robotic_arm.gazebo` to use modern `gz_ros2_control::GazeboSimROS2ControlPlugin`.
 * [x] Connected MoveIt 2 to Gazebo Harmonic by explicitly providing a `use_fake_hardware:=false` mapping inside `moveit_gazebo.launch.py`.
 * [x] Fixed RViz timer mismatch flickering and TF jumps by configuring `use_sim_time: true` across all Controller Managers and Launch parameters.
+* [x] Replaced legacy "Gazebo/Silver" Ogre materials with modern custom Gazebo Harmonic PBR material tags `<ambient>`, `<diffuse>`, and `<specular>`.
+* [x] Added visual styling to the URDF (RViz and Gazebo): Orange links, Dark Grey base, and Black gripper.
 
 ## Current Issues & Roadblocks
-* [ ] **Ogre Material Warnings:** The legacy material "Gazebo/Silver" generates warnings in Gazebo Harmonic. This isn't fatal as it falls back to default, but eventually, standard modern PBR materials should be applied.
+* [ ] No major roadblocks currently. Core simulation and control logic are stable.
 
 ## Next Steps
 * [ ] Proceed to Phase 2: Integrate MediaPipe live tracking directly into MoveIt 2's action server to control the simulation dynamically from the webcam.
