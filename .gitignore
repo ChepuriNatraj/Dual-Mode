@@ -1,0 +1,23 @@
+# ROS 2 / colcon build outputs
+build/
+install/
+log/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Logs and generated artifacts
+*.log
+*.tmp
+
+# Office and binary exports
+*.pdf
+*.docx
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
