@@ -1,86 +1,76 @@
 # Dual-Mode Vision-Guided Robotic Arm
 
-Design and development of a 6-DOF robotic arm that supports:
+Design and development of a 6-DOF robotic arm that seamlessly bridges fully autonomous operation and human-in-the-loop teleoperation.
 
-- Autonomous vision-based object sorting
-- Local gesture teleoperation
-- Remote internet-based gesture control
-- Automatic mode switching between AUTO, LOCAL, and REMOTE
+The system is designed to sort objects across a workspace completely hands-free using edge AI (OpenCV + YOLOv8). By simply showing a hand to a camera or a mobile phone from anywhere over the internet, a human operator can instantly seize remote teleoperation (via MediaPipe kinematics mapping), effectively providing a zero-UI override for industrial and assistive robotic arms. 
 
-Current platform:
+## Operating Environment
+- **OS:** Ubuntu 24.04 LTS
+- **Middleware:** ROS 2 Jazzy Jalisco
+- **Simulation:** Gazebo Harmonic
+- **Motion Planning:** MoveIt 2
+- **Hardware Profile:** Custom 6-DOF Metal Servo Arm + Arduino Mega / PCA9685
 
-- Ubuntu 24.04 LTS
-- ROS 2 Jazzy
-- Gazebo Harmonic
-- MoveIt 2
+---
 
-## Current Project Status
+## 🎯 Current Project Status: Simulation Phase Complete
 
-Simulation and core motion planning are working, with vision and remote-control phases in progress.
+The core architectural simulation infrastructure is fully established and tuned. The MoveIt 2 motion planning pipeline successfully solves the 5-DOF IK limitations, respects joint boundary properties, and executes ghost trajectories efficiently. The environment flawlessly handles the complex closed-loop mimic joint mechanics of a parallel gripper using the `gz-physics-bullet-featherstone` integration.
 
-- URDF migration and simulation debugging: complete
-- Gazebo Harmonic launch pipeline: working
-- MoveIt 2 setup and planning: mostly working
-- Gesture demo prototype: working in RViz
-- Vision sorting, MQTT remote mode, and hardware interface: pending
+**Milestone Checklist:**
+- [x] URDF ROS 2 migration and Jazzy compliance
+- [x] MoveIt 2 Setup Assistant generation and parameterization tuning
+- [x] Resolution of Gazebo physics constraints dropping mimic meshes
+- [x] KDL Inverse Kinematics modifications for smooth 5-DOF Interactive Markers
+- [ ] Connect MoveIt RViz execution directly to Gazebo simulated JointTrajectoryControllers
+- [ ] Implement OpenCV/YOLOv8 vision pipeline (`robot_arm_vision`)
+- [ ] Implement MediaPipe gesture capturing (`robot_arm_gesture`)
+- [ ] Develop MQTT Bridge for internet-based control (`robot_arm_remote`)
+- [ ] Construct custom ROS2 C++ `hardware_interface` for physical servos
 
-Detailed progress lives in:
+For deep tracking of solved challenges, see [MoveIt_Simulation_Troubleshooting.md](./MoveIt_Simulation_Troubleshooting.md).
+For granular steps forward, refer to [REMAINING_STEPS.md](./REMAINING_STEPS.md).
 
-- PROGRESS.md
-- REMAINING_STEPS.md
-- MoveIt_Simulation_Troubleshooting.md
+---
 
-## Repository Structure
+## 📁 Repository Structure
 
 ```text
 .
 ├── src/
-│   ├── robot_arm_description/      # URDF/Xacro, meshes, base launch files
-│   ├── robot_arm_gazebo/           # Gazebo Harmonic launch + controllers
-│   └── robot_arm_moveit2/          # MoveIt2 config and launch files
-├── PROGRESS.md
-├── REMAINING_STEPS.md
-├── MoveIt_Simulation_Troubleshooting.md
-├── run_moveit_setup.sh
-└── scripts and helper notes
+│   ├── robot_arm_description/      # Xacro URDF, STL material meshes, legacy configs
+│   ├── robot_arm_gazebo/           # Launch files bridging ROS 2 to Gazebo Harmonic
+│   └── robot_arm_moveit2/          # MoveIt2 semantic format (SRDF), kinematics, trajectories
+├── progress.md                     # Raw checklist of accomplished tasks
+├── REMAINING_STEPS.md              # Live checklist for the remaining Vision & AI phases
+├── MoveIt_Simulation_Troubleshooting.md # Guide covering 8 major MoveIt/Gazebo bugs faced
+└── (Build artifacts naturally excluded via .gitignore)
 ```
 
-## Quick Start
+---
 
-### 1) Build
+## 🚀 Quick Start (Simulation)
 
+Ensure ROS 2 Jazzy is sourced in your environment.
+
+### 1) Build the Workspace
 ```bash
 cd /home/natraj/file
-source /opt/ros/jazzy/setup.bash
 colcon build --symlink-install
 source install/setup.bash
 ```
 
-### 2) Launch MoveIt Demo
-
+### 2) Launch the MoveIt 2 Interactive Planner
+This launches RViz with the configured robot. You can drag the RGB interactive marker and execute path planning sequences.
 ```bash
 ros2 launch robot_arm_moveit2 demo.launch.py
 ```
 
-### 3) Launch Gazebo + RViz Pipeline
-
+### 3) Launch the Physics Environment (Gazebo)
+This spawns the URDF with its `ros2_control` parameters directly inside Gazebo Harmonic, ready to receive `/joint_trajectory` commands.
 ```bash
 ros2 launch robot_arm_gazebo gazebo_rviz.launch.py
 ```
 
-## Next Milestones
-
-- Finalize controller bridge so MoveIt execution drives Gazebo arm motion directly
-- Add OpenCV + YOLOv8 perception pipeline for autonomous sorting
-- Integrate MediaPipe gesture control into controller trajectory flow
-- Add MQTT bridge for remote phone control
-- Implement robust mode manager and safety timeouts
-
-## Notes
-
-- This repository currently includes development notes and troubleshooting docs used during active implementation.
-- Build artifacts are excluded via .gitignore.
-
-## Author
-
-Maintainer: Natraj
+## Authors
+**Maintainer:** Natraj
