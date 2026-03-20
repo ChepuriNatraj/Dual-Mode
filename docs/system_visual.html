@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dual-Mode Vision-Guided Robotic Arm — System Visualiser</title>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e3a5f;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --accent3: #10b981;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --auto-color: #10b981;
+    --local-color: #00d4ff;
+    --remote-color: #7c3aed;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(10,14,26,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 2rem;
+    padding: 0.75rem 2rem;
+  }
+  nav .logo { font-size: 0.85rem; font-weight: 700; color: var(--accent); letter-spacing: 0.05em; }
+  nav a {
+    color: var(--muted); text-decoration: none; font-size: 0.8rem;
+    transition: color 0.2s; cursor: pointer;
+  }
+  nav a:hover { color: var(--accent); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 6rem 2rem 4rem;
+    position: relative; overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(0,212,255,0.07) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 40% at 80% 80%, rgba(124,58,237,0.06) 0%, transparent 60%);
+  }
+  .grid-bg {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(30,58,95,0.3) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(30,58,95,0.3) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+  }
+  .hero h1 {
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 800; line-height: 1.15;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 60%, var(--accent2) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; max-width: 800px; position: relative;
+  }
+  .hero p {
+    margin-top: 1.2rem; color: var(--muted); font-size: 1rem;
+    max-width: 560px; line-height: 1.7; position: relative;
+  }
+  .badge-row {
+    display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center;
+    margin-top: 2rem; position: relative;
+  }
+  .badge {
+    padding: 0.3rem 0.8rem; border-radius: 999px;
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.03em;
+    border: 1px solid;
+  }
+  .badge-cyan { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.08); }
+  .badge-purple { border-color: var(--accent2); color: var(--accent2); background: rgba(124,58,237,0.08); }
+  .badge-green { border-color: var(--accent3); color: var(--accent3); background: rgba(16,185,129,0.08); }
+  .badge-yellow { border-color: var(--warn); color: var(--warn); background: rgba(245,158,11,0.08); }
+  .scroll-hint {
+    position: relative; margin-top: 3rem;
+    color: var(--muted); font-size: 0.75rem;
+    display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+    animation: bounce 2s infinite;
+  }
+  .scroll-hint .arrow { font-size: 1.2rem; }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(6px); }
+  }
+
+  /* ── SECTIONS ── */
+  section { padding: 5rem 2rem; max-width: 1100px; margin: 0 auto; }
+  .section-label {
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em;
+    color: var(--accent); text-transform: uppercase; margin-bottom: 0.5rem;
+  }
+  .section-title {
+    font-size: clamp(1.4rem, 2.5vw, 2rem);
+    font-weight: 700; margin-bottom: 0.5rem;
+  }
+  .section-sub {
+    color: var(--muted); font-size: 0.9rem; margin-bottom: 2.5rem; line-height: 1.6;
+  }
+  hr.divider {
+    border: none; border-top: 1px solid var(--border);
+    max-width: 1100px; margin: 0 auto;
+  }
+
+  /* ── MODE SWITCHER ── */
+  .mode-tabs {
+    display: flex; gap: 0; border-radius: 12px; overflow: hidden;
+    border: 1px solid var(--border); margin-bottom: 2rem;
+    background: var(--surface);
+  }
+  .mode-tab {
+    flex: 1; padding: 0.9rem 1rem; text-align: center; cursor: pointer;
+    font-size: 0.82rem; font-weight: 600; transition: all 0.25s;
+    color: var(--muted); border: none; background: transparent;
+  }
+  .mode-tab.active-auto { background: rgba(16,185,129,0.15); color: var(--auto-color); }
+  .mode-tab.active-local { background: rgba(0,212,255,0.15); color: var(--local-color); }
+  .mode-tab.active-remote { background: rgba(124,58,237,0.15); color: var(--remote-color); }
+  .mode-panel { display: none; }
+  .mode-panel.active { display: block; }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow {
+    display: flex; align-items: center; gap: 0; flex-wrap: wrap;
+    margin: 1.5rem 0;
+  }
+  .flow-node {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 0.7rem 1rem;
+    font-size: 0.78rem; font-weight: 600; text-align: center;
+    min-width: 110px; position: relative;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .flow-node span { display: block; font-size: 0.65rem; color: var(--muted); font-weight: 400; margin-top: 0.2rem; }
+  .flow-node.highlight-auto { border-color: var(--auto-color); box-shadow: 0 0 14px rgba(16,185,129,0.25); }
+  .flow-node.highlight-local { border-color: var(--local-color); box-shadow: 0 0 14px rgba(0,212,255,0.25); }
+  .flow-node.highlight-remote { border-color: var(--remote-color); box-shadow: 0 0 14px rgba(124,58,237,0.25); }
+  .flow-node.hardware { border-color: var(--warn); }
+  .flow-arrow {
+    font-size: 1.2rem; color: var(--muted); padding: 0 0.3rem;
+    flex-shrink: 0;
+  }
+  .flow-arrow.green { color: var(--auto-color); }
+  .flow-arrow.cyan { color: var(--local-color); }
+  .flow-arrow.purple { color: var(--remote-color); }
+
+  /* ── PULSE ANIMATION ON ACTIVE FLOW ── */
+  @keyframes pulse-border {
+    0%, 100% { box-shadow: 0 0 8px rgba(0,212,255,0.2); }
+    50% { box-shadow: 0 0 22px rgba(0,212,255,0.55); }
+  }
+  .pulsing { animation: pulse-border 1.8s infinite; }
+
+  /* ── ARCHITECTURE GRID ── */
+  .arch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem; margin: 2rem 0;
+  }
+  .arch-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.2rem;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .arch-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .arch-card .icon { font-size: 1.6rem; margin-bottom: 0.6rem; }
+  .arch-card h4 { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.3rem; }
+  .arch-card p { font-size: 0.75rem; color: var(--muted); line-height: 1.5; }
+  .arch-card .tag {
+    display: inline-block; margin-top: 0.6rem;
+    font-size: 0.65rem; font-weight: 700; padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  /* ── NODE GRAPH ── */
+  .node-graph { position: relative; width: 100%; overflow-x: auto; }
+  .node-graph svg { display: block; min-width: 700px; }
+
+  /* ── WIRING DIAGRAM ── */
+  .wiring-section { background: var(--surface); border-radius: 16px; padding: 2rem; }
+  .wiring-section svg { display: block; max-width: 100%; margin: 0 auto; }
+  .wire-table {
+    width: 100%; border-collapse: collapse; margin-top: 1.5rem;
+    font-size: 0.8rem;
+  }
+  .wire-table th {
+    background: var(--surface2); padding: 0.6rem 0.8rem;
+    text-align: left; font-size: 0.72rem; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border);
+  }
+  .wire-table td {
+    padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(30,58,95,0.4);
+  }
+  .wire-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+  /* ── CAMERA ARCH ── */
+  .camera-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.2rem; margin-top: 1.5rem;
+  }
+  .camera-card {
+    background: var(--surface); border-radius: 14px; padding: 1.5rem;
+    border: 1px solid var(--border); position: relative; overflow: hidden;
+  }
+  .camera-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .camera-card.cam1::before { background: linear-gradient(90deg, var(--accent3), #059669); }
+  .camera-card.cam2::before { background: linear-gradient(90deg, var(--accent), #0284c7); }
+  .camera-card.cam3::before { background: linear-gradient(90deg, var(--accent2), #9333ea); }
+  .camera-card h4 { font-size: 0.9rem; font-weight: 700; margin: 0.6rem 0 0.4rem; }
+  .camera-card .cam-icon { font-size: 2rem; }
+  .camera-card p { font-size: 0.75rem; color: var(--muted); line-height: 1.6; }
+  .camera-card .pipeline {
+    margin-top: 1rem; font-size: 0.72rem;
+    background: var(--surface2); border-radius: 8px; padding: 0.7rem;
+    line-height: 1.8; color: var(--muted);
+  }
+  .camera-card .pipeline strong { color: var(--text); }
+
+  /* ── PHASE TRACKER ── */
+  .phase-list { display: flex; flex-direction: column; gap: 0.8rem; }
+  .phase-item {
+    display: flex; align-items: center; gap: 1rem;
+    background: var(--surface); border-radius: 10px; padding: 1rem 1.2rem;
+    border: 1px solid var(--border);
+  }
+  .phase-status { font-size: 1.2rem; flex-shrink: 0; width: 28px; text-align: center; }
+  .phase-info { flex: 1; }
+  .phase-info h4 { font-size: 0.85rem; font-weight: 600; }
+  .phase-info p { font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; }
+  .phase-badge {
+    font-size: 0.65rem; font-weight: 700; padding: 0.25rem 0.6rem;
+    border-radius: 999px; flex-shrink: 0;
+  }
+  .pb-done { background: rgba(16,185,129,0.15); color: var(--auto-color); border: 1px solid var(--auto-color); }
+  .pb-progress { background: rgba(0,212,255,0.15); color: var(--local-color); border: 1px solid var(--local-color); }
+  .pb-pending { background: rgba(100,116,139,0.15); color: var(--muted); border: 1px solid var(--muted); }
+  .pb-next { background: rgba(245,158,11,0.15); color: var(--warn); border: 1px solid var(--warn); }
+
+  /* ── SAFETY TABLE ── */
+  .safety-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.8rem; margin-top: 1.5rem;
+  }
+  .safety-item {
+    background: var(--surface); border-radius: 10px; padding: 1rem;
+    border: 1px solid var(--border);
+  }
+  .safety-item .si-icon { font-size: 1.3rem; margin-bottom: 0.4rem; }
+  .safety-item h4 { font-size: 0.8rem; font-weight: 700; margin-bottom: 0.3rem; }
+  .safety-item p { font-size: 0.73rem; color: var(--muted); line-height: 1.5; }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center; padding: 3rem 2rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted); font-size: 0.75rem; line-height: 1.8;
+  }
+
+  /* ── ANIMATED DATA PACKET ── */
+  @keyframes flow-packet {
+    0% { left: -12px; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { left: calc(100% + 12px); opacity: 0; }
+  }
+  .packet-line {
+    position: relative; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 0.3rem 0; overflow: visible;
+  }
+  .packet {
+    position: absolute; top: -4px; width: 10px; height: 10px;
+    border-radius: 50%; animation: flow-packet 2.5s linear infinite;
+  }
+  .packet-cyan { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .packet-green { background: var(--auto-color); box-shadow: 0 0 6px var(--auto-color); }
+  .packet-purple { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+  .packet:nth-child(2) { animation-delay: 0.8s; }
+  .packet:nth-child(3) { animation-delay: 1.6s; }
+
+  /* ── TOOLTIP ── */
+  [data-tip] { position: relative; cursor: help; }
+  [data-tip]::after {
+    content: attr(data-tip);
+    position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); font-size: 0.7rem; padding: 0.4rem 0.7rem;
+    border-radius: 6px; white-space: nowrap; pointer-events: none;
+    opacity: 0; transition: opacity 0.2s; z-index: 10;
+  }
+  [data-tip]:hover::after { opacity: 1; }
+
+  /* ── LATENCY BAR ── */
+  .latency-breakdown {
+    background: var(--surface); border-radius: 12px; padding: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  .lat-row { display: flex; align-items: center; gap: 1rem; margin: 0.5rem 0; }
+  .lat-label { font-size: 0.75rem; min-width: 160px; color: var(--muted); }
+  .lat-bar-wrap { flex: 1; background: var(--surface2); border-radius: 4px; height: 8px; overflow: hidden; }
+  .lat-bar { height: 100%; border-radius: 4px; transition: width 1s ease; }
+  .lat-val { font-size: 0.75rem; min-width: 50px; text-align: right; font-weight: 600; }
+
+  @media (max-width: 640px) {
+    .flow { flex-direction: column; align-items: flex-start; }
+    .flow-arrow { transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">⚙ ROBOTIC ARM</div>
+  <a onclick="document.getElementById('modes').scrollIntoView()">Modes</a>
+  <a onclick="document.getElementById('cameras').scrollIntoView()">Cameras</a>
+  <a onclick="document.getElementById('nodes').scrollIntoView()">ROS2 Graph</a>
+  <a onclick="document.getElementById('wiring').scrollIntoView()">Wiring</a>
+  <a onclick="document.getElementById('phases').scrollIntoView()">Progress</a>
+  <a onclick="document.getElementById('safety').scrollIntoView()">Safety</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="grid-bg"></div>
+  <h1>Dual-Mode Vision-Guided<br/>Robotic Arm</h1>
+  <p>A 6-DOF autonomous sorting robot with interrupt-safe human-in-the-loop control — local gesture, remote MQTT, and full AI vision pipeline.</p>
+  <div class="badge-row">
+    <span class="badge badge-green">ROS2 Jazzy</span>
+    <span class="badge badge-cyan">YOLOv8 CUDA</span>
+    <span class="badge badge-cyan">MediaPipe</span>
+    <span class="badge badge-purple">MQTT HiveMQ</span>
+    <span class="badge badge-yellow">MoveIt2</span>
+    <span class="badge badge-green">Gazebo Harmonic</span>
+    <span class="badge badge-purple">ESP8266 + PCA9685</span>
+  </div>
+  <div class="scroll-hint">
+    <span>Scroll to explore</span>
+    <span class="arrow">↓</span>
+  </div>
+</div>
+
+<hr class="divider" />
+
+<!-- SYSTEM HARDWARE OVERVIEW -->
+<section id="hardware">
+  <div class="section-label">Hardware Overview</div>
+  <div class="section-title">What's Inside the System</div>
+  <div class="section-sub">Every physical component and its role in the pipeline.</div>
+  <div class="arch-grid">
+    <div class="arch-card">
+      <div class="icon">🦾</div>
+      <h4>6-DOF Robotic Arm</h4>
+      <p>Metal servo arm kit with 6× MG996R servos, aluminium brackets, claw gripper.</p>
+      <span class="tag" style="background:rgba(16,185,129,0.12);color:var(--auto-color)">On Hand ✓</span>
+    </div>
+    <div class="arch-card">
+      <div class="icon">📡</div>
+      <h4>ESP8266 NodeMCU</h4>
+      <p>Wi-Fi microcontroller acting as ROS2 ↔ PCA9685 bridge. Replaces Arduino Mega for wireless capability.</p>
+      <span class="tag" style="background:rgba(16,185,129,0.12);color:var(--auto-color)">On Hand ✓</span>
+    </div>
+    <div class="arch-card">
+      <div class="icon">🔌</div>
+      <h4>PCA9685 16-ch</h4>
+      <p>I²C servo driver. Takes joint angle commands from ESP8266, outputs PWM to all 6 servo channels.</p>
+      <span class="tag" style="background:rgba(16,185,129,0.12);color:var(--auto-color)">On Hand ✓</span>
+    </div>
+    <div class="arch-card">
+      <div class="icon">⚡</div>
+      <h4>5V / 10A PSU</h4>
+      <p>Dedicated servo power supply. Prevents brownout under peak MG996R stall current (~1.8A × 6 servos).</p>
+      <span class="tag" style="background:rgba(16,185,129,0.12);color:var(--auto-color)">On Hand ✓</span>
+    </div>
+    <div class="arch-card">
+      <div class="icon">📷</div>
+      <h4>1080p Webcam</h4>
+      <p>Laptop-mounted. Used exclusively for LOCAL gesture control via MediaPipe.</p>
+      <span class="tag" style="background:rgba(16,185,129,0.12);color:var(--auto-color)">On Hand ✓</span>
+    </div>
+    <div class="arch-card">
+      <div class="icon">📱</div>
+      <h4>User's Phone</h4>
+      <p>Fixed overhead via IP Webcam app. MJPEG stream → YOLOv8 object detection. Free, 1080p+.</p>
+      <span class="tag" style="background:rgba(16,185,129,0.12);color:var(--auto-color)">On Hand ✓</span>
+    </div>
+    <div class="arch-card">
+      <div class="icon">🧭</div>
+      <h4>MPU6050 IMU</h4>
+      <p>6-axis accelerometer + gyroscope on wrist link. Detects cumulative servo drift. I²C address 0x68.</p>
+      <span class="tag" style="background:rgba(245,158,11,0.12);color:var(--warn)">To Order ₹199</span>
+    </div>
+    <div class="arch-card">
+      <div class="icon">💻</div>
+      <h4>Laptop (RTX 3060)</h4>
+      <p>Main compute: ROS2, Gazebo, YOLOv8 (CUDA), MoveIt2, MediaPipe. Ubuntu 24.04 LTS.</p>
+      <span class="tag" style="background:rgba(16,185,129,0.12);color:var(--auto-color)">On Hand ✓</span>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- MODE SWITCHER -->
+<section id="modes">
+  <div class="section-label">Operating Modes</div>
+  <div class="section-title">Three Modes. One Unified System.</div>
+  <div class="section-sub">Click each mode to see its complete data flow from sensor to servo.</div>
+
+  <div class="mode-tabs">
+    <button class="mode-tab active-auto" onclick="switchMode('auto')">🤖 AUTONOMOUS</button>
+    <button class="mode-tab" onclick="switchMode('local')">✋ LOCAL GESTURE</button>
+    <button class="mode-tab" onclick="switchMode('remote')">🌐 REMOTE MQTT</button>
+  </div>
+
+  <!-- AUTO MODE -->
+  <div class="mode-panel active" id="panel-auto">
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1.2rem;line-height:1.6">
+      <strong style="color:var(--auto-color)">Default state.</strong> The arm runs the full AI vision pipeline independently — no human input required. YOLOv8 detects objects overhead, MoveIt2 plans collision-free paths, the arm picks and sorts continuously.
+    </p>
+    <div class="flow">
+      <div class="flow-node highlight-auto">📱 Phone Camera<span>IP Webcam MJPEG</span></div>
+      <div class="flow-arrow green">→</div>
+      <div class="flow-node highlight-auto">YOLOv8<span>CUDA RTX 3060</span></div>
+      <div class="flow-arrow green">→</div>
+      <div class="flow-node highlight-auto">Object Class<span>+ 2D bbox</span></div>
+      <div class="flow-arrow green">→</div>
+      <div class="flow-node highlight-auto">Homography<span>Pixel → 3D XYZ</span></div>
+      <div class="flow-arrow green">→</div>
+      <div class="flow-node highlight-auto">MoveIt2 IK<span>Collision-free path</span></div>
+      <div class="flow-arrow green">→</div>
+      <div class="flow-node highlight-auto hardware">PCA9685<span>PWM to servos</span></div>
+    </div>
+    <div style="margin-top:1rem;background:var(--surface);border-radius:10px;padding:1rem;font-size:0.78rem;color:var(--muted);line-height:1.8">
+      <strong style="color:var(--auto-color)">Cycle:</strong> Detect → Localise → Plan → Pick → Place in bin → Return to home → Repeat<br/>
+      <strong style="color:var(--auto-color)">Inference:</strong> ~15–20 ms per frame at 1080p (YOLOv8n on CUDA)<br/>
+      <strong style="color:var(--auto-color)">ROS2 Topics:</strong> <code>/camera/image_raw</code> → <code>/detected_objects</code> → <code>/target_pose</code> → <code>/arm_controller/joint_trajectory</code>
+    </div>
+  </div>
+
+  <!-- LOCAL MODE -->
+  <div class="mode-panel" id="panel-local">
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1.2rem;line-height:1.6">
+      <strong style="color:var(--local-color)">Override triggered</strong> when MediaPipe detects a hand in the laptop webcam. Autonomous mode pauses immediately. The operator's 21 hand landmarks are mapped to 6 joint angles in real-time.
+    </p>
+    <div class="flow">
+      <div class="flow-node highlight-local">💻 Webcam<span>Laptop built-in</span></div>
+      <div class="flow-arrow cyan">→</div>
+      <div class="flow-node highlight-local">MediaPipe<span>21 landmarks</span></div>
+      <div class="flow-arrow cyan">→</div>
+      <div class="flow-node highlight-local">Landmark Map<span>→ 6 joint angles</span></div>
+      <div class="flow-arrow cyan">→</div>
+      <div class="flow-node highlight-local">EMA Filter<span>Jitter removal</span></div>
+      <div class="flow-arrow cyan">→</div>
+      <div class="flow-node highlight-local">MoveIt2<span>Safety clamping</span></div>
+      <div class="flow-arrow cyan">→</div>
+      <div class="flow-node highlight-local hardware">PCA9685<span>PWM to servos</span></div>
+    </div>
+    <div style="margin-top:1rem;background:var(--surface);border-radius:10px;padding:1rem;font-size:0.78rem;color:var(--muted);line-height:1.8">
+      <strong style="color:var(--local-color)">Landmark mapping:</strong><br/>
+      Wrist position → Base rotation (joint_1)<br/>
+      Palm orientation → Shoulder + elbow (joints 2, 3)<br/>
+      Finger curl angles → Wrist + end joints (joints 4, 5)<br/>
+      Thumb–index gap → Gripper open/close (joint_6)<br/>
+      <strong style="color:var(--local-color)">Latency:</strong> ~30–50 ms (CPU-only MediaPipe, no GPU needed)
+    </div>
+  </div>
+
+  <!-- REMOTE MODE -->
+  <div class="mode-panel" id="panel-remote">
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1.2rem;line-height:1.6">
+      <strong style="color:var(--remote-color)">Global override.</strong> Any person anywhere in the world opens the ngrok URL in their phone browser. MediaPipe.js runs in-browser — no app install. Joint angles publish via MQTT to HiveMQ cloud, bridged into ROS2.
+    </p>
+    <div class="flow">
+      <div class="flow-node highlight-remote">🌍 Remote Phone<span>Browser only</span></div>
+      <div class="flow-arrow purple">→</div>
+      <div class="flow-node highlight-remote">MediaPipe.js<span>In-browser</span></div>
+      <div class="flow-arrow purple">→</div>
+      <div class="flow-node highlight-remote">MQTT JSON<span>HiveMQ cloud</span></div>
+      <div class="flow-arrow purple">→</div>
+      <div class="flow-node highlight-remote">mqtt_bridge<span>ROS2 node</span></div>
+      <div class="flow-arrow purple">→</div>
+      <div class="flow-node highlight-remote">MoveIt2<span>IK + limits</span></div>
+      <div class="flow-arrow purple">→</div>
+      <div class="flow-node highlight-remote hardware">PCA9685<span>PWM to servos</span></div>
+    </div>
+    <div class="latency-breakdown">
+      <div style="font-size:0.78rem;font-weight:700;margin-bottom:0.8rem;color:var(--remote-color)">End-to-End Latency Breakdown</div>
+      <div class="lat-row">
+        <span class="lat-label">MediaPipe.js (browser)</span>
+        <div class="lat-bar-wrap"><div class="lat-bar" style="width:14%;background:var(--remote-color)"></div></div>
+        <span class="lat-val" style="color:var(--remote-color)">~30 ms</span>
+      </div>
+      <div class="lat-row">
+        <span class="lat-label">MQTT internet transit</span>
+        <div class="lat-bar-wrap"><div class="lat-bar" style="width:40%;background:#9333ea"></div></div>
+        <span class="lat-val" style="color:#9333ea">~80 ms</span>
+      </div>
+      <div class="lat-row">
+        <span class="lat-label">ROS2 bridge + MoveIt2</span>
+        <div class="lat-bar-wrap"><div class="lat-bar" style="width:28%;background:#a78bfa"></div></div>
+        <span class="lat-val" style="color:#a78bfa">~60 ms</span>
+      </div>
+      <div class="lat-row">
+        <span class="lat-label">Servo movement</span>
+        <div class="lat-bar-wrap"><div class="lat-bar" style="width:60%;background:#c4b5fd"></div></div>
+        <span class="lat-val" style="color:#c4b5fd">~120 ms</span>
+      </div>
+      <div style="margin-top:0.8rem;font-size:0.75rem;color:var(--text)">
+        Total: <strong style="color:var(--remote-color);font-size:0.95rem">~290 ms</strong>
+        <span style="color:var(--muted)"> — fully usable for teleoperation</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- CAMERA ARCHITECTURE -->
+<section id="cameras">
+  <div class="section-label">Camera Architecture</div>
+  <div class="section-title">Three Cameras. Three Different Jobs.</div>
+  <div class="section-sub">Each camera is dedicated to a single purpose. There is no overlap or conflict.</div>
+  <div class="camera-grid">
+    <div class="camera-card cam1">
+      <div class="cam-icon">📱</div>
+      <h4>Camera 1 — User's Phone</h4>
+      <p>Fixed overhead, mounted on a stand above the workspace. Streams MJPEG via IP Webcam app on local Wi-Fi. Always on during autonomous mode.</p>
+      <div class="pipeline">
+        <strong>IP Webcam MJPEG</strong><br/>
+        → cv2.VideoCapture("http://...")<br/>
+        → /camera/image_raw<br/>
+        → YOLOv8 inference (CUDA)<br/>
+        → /detected_objects
+      </div>
+      <span class="tag" style="background:rgba(16,185,129,0.12);color:var(--auto-color);margin-top:0.8rem;display:inline-block">FOR: Autonomous Sorting</span>
+    </div>
+    <div class="camera-card cam2">
+      <div class="cam-icon">💻</div>
+      <h4>Camera 2 — Laptop Webcam</h4>
+      <p>Built-in webcam, always active. MediaPipe monitors continuously for a hand appearing in frame — the presence of a hand triggers LOCAL mode.</p>
+      <div class="pipeline">
+        <strong>usb_cam ROS2 node</strong><br/>
+        → /gesture_camera/image_raw<br/>
+        → MediaPipe HandLandmarker<br/>
+        → 21 landmarks (x, y, z)<br/>
+        → /gesture_node → /control_mode
+      </div>
+      <span class="tag" style="background:rgba(0,212,255,0.12);color:var(--local-color);margin-top:0.8rem;display:inline-block">FOR: Local Gesture Control</span>
+    </div>
+    <div class="camera-card cam3">
+      <div class="cam-icon">🌍</div>
+      <h4>Camera 3 — Any Remote Phone</h4>
+      <p>Remote operators use their own phone. Browser opens ngrok URL. No app install. MediaPipe.js runs in the browser tab itself.</p>
+      <div class="pipeline">
+        <strong>Phone front camera</strong><br/>
+        → MediaPipe.js (browser)<br/>
+        → JSON {j1…j6} via MQTT<br/>
+        → HiveMQ cloud broker<br/>
+        → mqtt_bridge_node.py → ROS2
+      </div>
+      <span class="tag" style="background:rgba(124,58,237,0.12);color:var(--remote-color);margin-top:0.8rem;display:inline-block">FOR: Remote MQTT Control</span>
+    </div>
+  </div>
+  <div style="margin-top:1.5rem;background:var(--surface);border-radius:12px;padding:1.2rem;font-size:0.78rem;color:var(--muted);line-height:1.8;border:1px solid var(--border)">
+    <strong style="color:var(--warn)">Why NOT OV7670?</strong> — Raw parallel bus (10+ GPIO lines), no JPEG compression (900KB/frame), VGA max resolution, no ROS2 driver, notoriously unstable wiring. A bare sensor module is architecturally incompatible with a ROS2 + YOLOv8 pipeline.<br/>
+    <strong style="color:var(--warn)">Why NOT ESP32-CAM?</strong> — 640×480 max, requires custom firmware flash, worse image quality than phone, costs ₹400 vs ₹0 for the phone you already own.
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ROS2 NODE GRAPH -->
+<section id="nodes">
+  <div class="section-label">ROS2 Architecture</div>
+  <div class="section-title">Node Graph — Who Talks to Whom</div>
+  <div class="section-sub">The Mode Manager is the single authority. Every control path passes through it.</div>
+
+  <div style="background:var(--surface);border-radius:16px;padding:1.5rem;border:1px solid var(--border);overflow-x:auto">
+    <svg viewBox="0 0 900 480" xmlns="http://www.w3.org/2000/svg" style="min-width:700px;width:100%">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#334155"/>
+        </marker>
+        <marker id="arr-green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#10b981"/>
+        </marker>
+        <marker id="arr-cyan" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#00d4ff"/>
+        </marker>
+        <marker id="arr-purple" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#7c3aed"/>
+        </marker>
+        <marker id="arr-yellow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#f59e0b"/>
+        </marker>
+      </defs>
+
+      <!-- ── Nodes ── -->
+      <!-- camera_node (overhead) -->
+      <rect x="10" y="30" width="130" height="50" rx="8" fill="#0f2a1a" stroke="#10b981" stroke-width="1.5"/>
+      <text x="75" y="51" text-anchor="middle" fill="#10b981" font-size="11" font-weight="bold">/camera_node</text>
+      <text x="75" y="66" text-anchor="middle" fill="#334155" font-size="9">Phone MJPEG overhead</text>
+
+      <!-- vision_node -->
+      <rect x="200" y="10" width="130" height="50" rx="8" fill="#0f2a1a" stroke="#10b981" stroke-width="1.5"/>
+      <text x="265" y="31" text-anchor="middle" fill="#10b981" font-size="11" font-weight="bold">/vision_node</text>
+      <text x="265" y="46" text-anchor="middle" fill="#334155" font-size="9">YOLOv8 + OpenCV</text>
+      <text x="265" y="56" text-anchor="middle" fill="#334155" font-size="9">Pixel → 3D XYZ</text>
+
+      <!-- sorting_planner -->
+      <rect x="390" y="10" width="140" height="50" rx="8" fill="#0f2a1a" stroke="#10b981" stroke-width="1.5"/>
+      <text x="460" y="31" text-anchor="middle" fill="#10b981" font-size="11" font-weight="bold">/sorting_planner</text>
+      <text x="460" y="46" text-anchor="middle" fill="#334155" font-size="9">Object → bin → target</text>
+      <text x="460" y="56" text-anchor="middle" fill="#334155" font-size="9">XYZ pose message</text>
+
+      <!-- gesture_node (webcam) -->
+      <rect x="10" y="130" width="130" height="50" rx="8" fill="#0a1e2e" stroke="#00d4ff" stroke-width="1.5"/>
+      <text x="75" y="151" text-anchor="middle" fill="#00d4ff" font-size="11" font-weight="bold">/gesture_node</text>
+      <text x="75" y="166" text-anchor="middle" fill="#334155" font-size="9">MediaPipe webcam</text>
+
+      <!-- mqtt_bridge_node -->
+      <rect x="10" y="230" width="130" height="50" rx="8" fill="#1a0e2e" stroke="#7c3aed" stroke-width="1.5"/>
+      <text x="75" y="251" text-anchor="middle" fill="#7c3aed" font-size="11" font-weight="bold">/mqtt_bridge</text>
+      <text x="75" y="266" text-anchor="middle" fill="#334155" font-size="9">HiveMQ → ROS2</text>
+
+      <!-- mode_manager (central) -->
+      <rect x="300" y="155" width="155" height="60" rx="10" fill="#1a1510" stroke="#f59e0b" stroke-width="2"/>
+      <text x="377" y="178" text-anchor="middle" fill="#f59e0b" font-size="12" font-weight="bold">/mode_manager</text>
+      <text x="377" y="193" text-anchor="middle" fill="#93764a" font-size="9">AUTO / LOCAL / REMOTE</text>
+      <text x="377" y="206" text-anchor="middle" fill="#93764a" font-size="9">Single control authority</text>
+
+      <!-- motion_planner_node -->
+      <rect x="560" y="130" width="140" height="50" rx="8" fill="#1a1007" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="630" y="151" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="bold">/motion_planner</text>
+      <text x="630" y="166" text-anchor="middle" fill="#334155" font-size="9">MoveIt2 IK + OMPL</text>
+
+      <!-- arm_controller -->
+      <rect x="560" y="240" width="140" height="50" rx="8" fill="#1a1007" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="630" y="261" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="bold">/arm_controller</text>
+      <text x="630" y="276" text-anchor="middle" fill="#334155" font-size="9">JointTrajectoryCtrl</text>
+
+      <!-- esp8266_bridge -->
+      <rect x="560" y="350" width="140" height="50" rx="8" fill="#1a1007" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="630" y="371" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="bold">/esp8266_bridge</text>
+      <text x="630" y="386" text-anchor="middle" fill="#334155" font-size="9">Serial → ESP8266</text>
+
+      <!-- PCA9685 / Servos (hardware) -->
+      <rect x="740" y="350" width="145" height="50" rx="8" fill="#1a1200" stroke="#ef4444" stroke-width="1.5"/>
+      <text x="812" y="371" text-anchor="middle" fill="#ef4444" font-size="11" font-weight="bold">PCA9685 + Servos</text>
+      <text x="812" y="386" text-anchor="middle" fill="#334155" font-size="9">Physical hardware</text>
+
+      <!-- ── Edges ── -->
+      <!-- camera → vision -->
+      <line x1="140" y1="55" x2="198" y2="35" stroke="#10b981" stroke-width="1.5" marker-end="url(#arr-green)"/>
+      <!-- vision → sorting_planner -->
+      <line x1="330" y1="35" x2="388" y2="35" stroke="#10b981" stroke-width="1.5" marker-end="url(#arr-green)"/>
+      <!-- sorting_planner → mode_manager -->
+      <line x1="460" y1="60" x2="420" y2="153" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr-green)"/>
+
+      <!-- gesture → mode_manager -->
+      <line x1="140" y1="155" x2="298" y2="175" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#arr-cyan)"/>
+      <!-- mqtt → mode_manager -->
+      <line x1="140" y1="255" x2="298" y2="195" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arr-purple)"/>
+
+      <!-- mode_manager → motion_planner -->
+      <line x1="455" y1="185" x2="558" y2="155" stroke="#f59e0b" stroke-width="2" marker-end="url(#arr-yellow)"/>
+      <!-- motion_planner → arm_controller -->
+      <line x1="630" y1="180" x2="630" y2="238" stroke="#f59e0b" stroke-width="2" marker-end="url(#arr-yellow)"/>
+      <!-- arm_controller → esp8266 -->
+      <line x1="630" y1="290" x2="630" y2="348" stroke="#f59e0b" stroke-width="2" marker-end="url(#arr-yellow)"/>
+      <!-- esp8266 → PCA9685 -->
+      <line x1="700" y1="375" x2="738" y2="375" stroke="#ef4444" stroke-width="1.5" marker-end="url(#arr)"/>
+
+      <!-- Legend -->
+      <rect x="10" y="330" width="240" height="130" rx="8" fill="#111827" stroke="#1e3a5f" stroke-width="1"/>
+      <text x="22" y="350" fill="#64748b" font-size="10" font-weight="bold">LEGEND</text>
+      <line x1="22" y1="365" x2="55" y2="365" stroke="#10b981" stroke-width="1.5"/>
+      <text x="62" y="369" fill="#64748b" font-size="9">Autonomous pipeline</text>
+      <line x1="22" y1="385" x2="55" y2="385" stroke="#00d4ff" stroke-width="1.5"/>
+      <text x="62" y="389" fill="#64748b" font-size="9">Local gesture control</text>
+      <line x1="22" y1="405" x2="55" y2="405" stroke="#7c3aed" stroke-width="1.5"/>
+      <text x="62" y="409" fill="#64748b" font-size="9">Remote MQTT control</text>
+      <line x1="22" y1="425" x2="55" y2="425" stroke="#f59e0b" stroke-width="2"/>
+      <text x="62" y="429" fill="#64748b" font-size="9">Mode manager → execution</text>
+      <rect x="22" y="436" width="14" height="10" rx="2" fill="none" stroke="#ef4444" stroke-width="1.5"/>
+      <text x="42" y="446" fill="#64748b" font-size="9">Physical hardware</text>
+    </svg>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- WIRING DIAGRAM -->
+<section id="wiring">
+  <div class="section-label">Hardware Wiring</div>
+  <div class="section-title">Power + Signal Architecture</div>
+  <div class="section-sub">Two completely separate power domains. One shared I²C bus. Common ground is mandatory.</div>
+  <div class="wiring-section">
+
+    <!-- SVG wiring diagram -->
+    <svg viewBox="0 0 820 360" xmlns="http://www.w3.org/2000/svg" style="max-width:820px;width:100%">
+      <defs>
+        <marker id="wa" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L7,3 z" fill="#64748b"/>
+        </marker>
+      </defs>
+
+      <!-- PSU -->
+      <rect x="20" y="100" width="110" height="80" rx="8" fill="#1a1007" stroke="#f59e0b" stroke-width="2"/>
+      <text x="75" y="132" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="bold">5V / 10A PSU</text>
+      <text x="75" y="148" text-anchor="middle" fill="#64748b" font-size="9">Servo Power</text>
+      <text x="75" y="163" text-anchor="middle" fill="#ef4444" font-size="9">V+ (red)  GND (blk)</text>
+
+      <!-- DC Jack -->
+      <rect x="185" y="110" width="90" height="60" rx="8" fill="#151515" stroke="#64748b" stroke-width="1.5"/>
+      <text x="230" y="135" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="bold">DC Jack</text>
+      <text x="230" y="150" text-anchor="middle" fill="#64748b" font-size="9">Female screw</text>
+      <text x="230" y="163" text-anchor="middle" fill="#64748b" font-size="9">terminal</text>
+
+      <!-- PSU → DC jack -->
+      <line x1="130" y1="140" x2="183" y2="140" stroke="#ef4444" stroke-width="2.5" marker-end="url(#wa)"/>
+      <line x1="130" y1="155" x2="183" y2="155" stroke="#1e3a5f" stroke-width="2.5" stroke-dasharray="none"/>
+
+      <!-- PCA9685 (central) -->
+      <rect x="340" y="70" width="140" height="180" rx="10" fill="#0a1a2e" stroke="#00d4ff" stroke-width="2"/>
+      <text x="410" y="96" text-anchor="middle" fill="#00d4ff" font-size="12" font-weight="bold">PCA9685</text>
+      <text x="410" y="112" text-anchor="middle" fill="#64748b" font-size="9">16-channel servo driver</text>
+      <!-- pins -->
+      <text x="360" y="138" fill="#ef4444" font-size="9">V+</text>
+      <circle cx="353" cy="135" r="4" fill="#ef4444"/>
+      <text x="360" y="158" fill="#475569" font-size="9">GND</text>
+      <circle cx="353" cy="155" r="4" fill="#475569"/>
+      <text x="360" y="178" fill="#7c3aed" font-size="9">VCC</text>
+      <circle cx="353" cy="175" r="4" fill="#7c3aed"/>
+      <text x="360" y="198" fill="#38bdf8" font-size="9">SCL</text>
+      <circle cx="353" cy="195" r="4" fill="#38bdf8"/>
+      <text x="360" y="218" fill="#34d399" font-size="9">SDA</text>
+      <circle cx="353" cy="215" r="4" fill="#34d399"/>
+      <!-- servo output side -->
+      <text x="455" y="138" fill="#f59e0b" font-size="9">CH0–CH5</text>
+      <text x="455" y="152" fill="#64748b" font-size="9">PWM 50Hz</text>
+      <text x="455" y="166" fill="#64748b" font-size="9">500–2500µs</text>
+
+      <!-- DC Jack → PCA9685 V+ -->
+      <line x1="275" y1="132" x2="338" y2="135" stroke="#ef4444" stroke-width="2" marker-end="url(#wa)"/>
+      <!-- DC Jack → PCA9685 GND -->
+      <line x1="275" y1="148" x2="338" y2="155" stroke="#475569" stroke-width="2" marker-end="url(#wa)"/>
+      <text x="285" y="125" fill="#ef4444" font-size="8">20-22 AWG</text>
+
+      <!-- ESP8266 -->
+      <rect x="560" y="90" width="130" height="200" rx="10" fill="#0e1a0e" stroke="#10b981" stroke-width="2"/>
+      <text x="625" y="116" text-anchor="middle" fill="#10b981" font-size="12" font-weight="bold">ESP8266</text>
+      <text x="625" y="131" text-anchor="middle" fill="#64748b" font-size="9">NodeMCU</text>
+      <!-- pins -->
+      <text x="576" y="165" fill="#7c3aed" font-size="9">3.3V</text>
+      <circle cx="569" cy="162" r="4" fill="#7c3aed"/>
+      <text x="576" y="185" fill="#475569" font-size="9">GND</text>
+      <circle cx="569" cy="182" r="4" fill="#475569"/>
+      <text x="576" y="205" fill="#38bdf8" font-size="9">D1(SCL)</text>
+      <circle cx="569" cy="202" r="4" fill="#38bdf8"/>
+      <text x="576" y="225" fill="#34d399" font-size="9">D2(SDA)</text>
+      <circle cx="569" cy="222" r="4" fill="#34d399"/>
+      <!-- ESP8266 right side -->
+      <text x="645" y="165" fill="#64748b" font-size="9">USB</text>
+      <text x="645" y="178" fill="#64748b" font-size="9">flash to</text>
+      <text x="645" y="191" fill="#64748b" font-size="9">laptop</text>
+
+      <!-- ESP8266 → PCA9685 VCC -->
+      <line x1="567" y1="162" x2="483" y2="175" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#wa)"/>
+      <!-- ESP8266 → PCA9685 GND (common) -->
+      <line x1="567" y1="182" x2="483" y2="155" stroke="#475569" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#wa)"/>
+      <!-- ESP8266 D1 → SCL -->
+      <line x1="567" y1="202" x2="483" y2="195" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#wa)"/>
+      <!-- ESP8266 D2 → SDA -->
+      <line x1="567" y1="222" x2="483" y2="215" stroke="#34d399" stroke-width="1.5" marker-end="url(#wa)"/>
+
+      <!-- Labels on wires -->
+      <text x="510" y="165" fill="#7c3aed" font-size="8">logic only</text>
+      <text x="510" y="205" fill="#38bdf8" font-size="8">I²C</text>
+
+      <!-- MPU6050 -->
+      <rect x="340" y="295" width="130" height="50" rx="8" fill="#0a1a2e" stroke="#00d4ff" stroke-width="1.5"/>
+      <text x="405" y="315" text-anchor="middle" fill="#00d4ff" font-size="11" font-weight="bold">MPU6050</text>
+      <text x="405" y="330" text-anchor="middle" fill="#64748b" font-size="9">I²C addr 0x68 — wrist link</text>
+
+      <!-- MPU6050 → I2C bus -->
+      <line x1="405" y1="295" x2="405" y2="250" stroke="#00d4ff" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#wa)"/>
+      <text x="415" y="275" fill="#00d4ff" font-size="8">shares I²C</text>
+
+      <!-- Servos box -->
+      <rect x="660" y="230" width="140" height="50" rx="8" fill="#1a0e00" stroke="#ef4444" stroke-width="1.5"/>
+      <text x="730" y="250" text-anchor="middle" fill="#ef4444" font-size="11" font-weight="bold">6× MG996R</text>
+      <text x="730" y="265" text-anchor="middle" fill="#64748b" font-size="9">PWM from CH0–CH5</text>
+
+      <!-- PCA9685 → Servos -->
+      <line x1="480" y1="155" x2="658" y2="245" stroke="#f59e0b" stroke-width="2" marker-end="url(#wa)"/>
+      <text x="545" y="200" fill="#f59e0b" font-size="8">PWM lines</text>
+
+      <!-- Power domain labels -->
+      <rect x="20" y="200" width="255" height="24" rx="4" fill="rgba(239,68,68,0.08)" stroke="rgba(239,68,68,0.3)" stroke-width="1"/>
+      <text x="148" y="217" text-anchor="middle" fill="#ef4444" font-size="9">⚡ SERVO POWER DOMAIN (5V/10A)</text>
+
+      <rect x="340" y="40" width="200" height="24" rx="4" fill="rgba(124,58,237,0.08)" stroke="rgba(124,58,237,0.3)" stroke-width="1"/>
+      <text x="440" y="57" text-anchor="middle" fill="#7c3aed" font-size="9">🔌 LOGIC DOMAIN (3.3V ESP8266)</text>
+    </svg>
+
+    <table class="wire-table">
+      <thead>
+        <tr>
+          <th>From</th><th>To</th><th>Signal</th><th>Wire</th><th>Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>PSU V+ (barrel)</td><td>PCA9685 V+</td>
+          <td><span class="dot" style="background:#ef4444"></span>5V servo power</td>
+          <td>20–22 AWG red</td><td>Through DC jack screw terminal</td>
+        </tr>
+        <tr>
+          <td>PSU GND</td><td>PCA9685 GND</td>
+          <td><span class="dot" style="background:#475569"></span>Power return</td>
+          <td>20–22 AWG black</td><td>Through DC jack screw terminal</td>
+        </tr>
+        <tr>
+          <td>ESP8266 3.3V</td><td>PCA9685 VCC</td>
+          <td><span class="dot" style="background:#7c3aed"></span>Logic power only</td>
+          <td>Any thin wire</td><td>NOT servo power — IC logic only</td>
+        </tr>
+        <tr>
+          <td>ESP8266 GND</td><td>PCA9685 GND</td>
+          <td><span class="dot" style="background:#475569"></span>Common ground</td>
+          <td>Any thin wire</td><td style="color:var(--warn)">MANDATORY — shared reference</td>
+        </tr>
+        <tr>
+          <td>ESP8266 D1 (GPIO5)</td><td>PCA9685 SCL</td>
+          <td><span class="dot" style="background:#38bdf8"></span>I²C clock</td>
+          <td>24–26 AWG</td><td>Pull-ups already on PCA9685 board</td>
+        </tr>
+        <tr>
+          <td>ESP8266 D2 (GPIO4)</td><td>PCA9685 SDA</td>
+          <td><span class="dot" style="background:#34d399"></span>I²C data</td>
+          <td>24–26 AWG</td><td>Pull-ups already on PCA9685 board</td>
+        </tr>
+        <tr>
+          <td>MPU6050 SCL/SDA</td><td>Same I²C bus</td>
+          <td><span class="dot" style="background:#00d4ff"></span>I²C (addr 0x68)</td>
+          <td>24–26 AWG</td><td>No address conflict with PCA9685</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- PHASE TRACKER -->
+<section id="phases">
+  <div class="section-label">Development Progress</div>
+  <div class="section-title">Phase-by-Phase Status</div>
+  <div class="section-sub">Simulation is complete. MoveIt2 is the immediate next step.</div>
+  <div class="phase-list">
+    <div class="phase-item">
+      <div class="phase-status">✅</div>
+      <div class="phase-info">
+        <h4>Phase 0 — URDF & Simulation Environment</h4>
+        <p>40-link CAD → clean 12-link URDF. 9 Gazebo Harmonic bugs fixed. RViz2 TF tree — fully working. joint_state_relay.py written.</p>
+      </div>
+      <span class="phase-badge pb-done">COMPLETE</span>
+    </div>
+    <div class="phase-item">
+      <div class="phase-status">✅</div>
+      <div class="phase-info">
+        <h4>Pre-Phase — MediaPipe Hand Detection</h4>
+        <p>MediaPipe installed and verified. 21 landmarks extracted from webcam at 30+ FPS. Landmark→joint mapping not yet written.</p>
+      </div>
+      <span class="phase-badge pb-done">VERIFIED</span>
+    </div>
+    <div class="phase-item" style="border-color:var(--warn)">
+      <div class="phase-status">⚡</div>
+      <div class="phase-info">
+        <h4>Phase 1 — MoveIt2 Setup (NEXT)</h4>
+        <p>Install MoveIt2. Run Setup Assistant on robot_arm_description package. Configure planning group 'arm', end-effector 'gripper', SRDF, kinematics solver.</p>
+      </div>
+      <span class="phase-badge pb-next">UP NEXT</span>
+    </div>
+    <div class="phase-item">
+      <div class="phase-status">🔄</div>
+      <div class="phase-info">
+        <h4>Phase 2 — Gesture → Arm Live Control</h4>
+        <p>Complete landmark-to-joint-angle mapping. Publish JointTrajectory → /arm_controller. Live arm mirroring in Gazebo simulation.</p>
+      </div>
+      <span class="phase-badge pb-progress">IN PROGRESS</span>
+    </div>
+    <div class="phase-item">
+      <div class="phase-status">⏳</div>
+      <div class="phase-info">
+        <h4>Phase 3 — YOLOv8 Autonomous Sorting</h4>
+        <p>IP Webcam stream → YOLOv8 inference → pixel-to-world coordinate → sorting planner → pick-sort-return cycle in Gazebo.</p>
+      </div>
+      <span class="phase-badge pb-pending">PENDING</span>
+    </div>
+    <div class="phase-item">
+      <div class="phase-status">⏳</div>
+      <div class="phase-info">
+        <h4>Phase 4 — MQTT Remote Control</h4>
+        <p>Flask web app served via ngrok. MediaPipe.js in browser. MQTT pub/sub to HiveMQ. mqtt_bridge_node.py decodes JSON → JointTrajectory.</p>
+      </div>
+      <span class="phase-badge pb-pending">PENDING</span>
+    </div>
+    <div class="phase-item">
+      <div class="phase-status">⏳</div>
+      <div class="phase-info">
+        <h4>Phase 5 — Hardware Deployment</h4>
+        <p>Flash ESP8266 firmware. Wire PCA9685. Implement ros2_control hardware interface. MPU6050 drift correction. Real servo validation.</p>
+      </div>
+      <span class="phase-badge pb-pending">PENDING</span>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- SAFETY FEATURES -->
+<section id="safety">
+  <div class="section-label">Safety & Reliability</div>
+  <div class="section-title">Eight Independent Safety Layers</div>
+  <div class="section-sub">Each layer operates independently — failure of one does not compromise the others.</div>
+  <div class="safety-grid">
+    <div class="safety-item">
+      <div class="si-icon">⏱</div>
+      <h4>Remote Timeout</h4>
+      <p>No MQTT command for 3 seconds → arm returns to home pose → AUTO mode resumes automatically.</p>
+    </div>
+    <div class="safety-item">
+      <div class="si-icon">📐</div>
+      <h4>Angle Clamping</h4>
+      <p>All joint angles hard-clamped to URDF limits. A phone cannot send a value that would physically damage the arm.</p>
+    </div>
+    <div class="safety-item">
+      <div class="si-icon">〰️</div>
+      <h4>EMA Jitter Filter</h4>
+      <p>Exponential moving average on all gesture inputs. Eliminates hand tremor and network jitter from becoming servo oscillation.</p>
+    </div>
+    <div class="safety-item">
+      <div class="si-icon">⏯</div>
+      <h4>Trajectory Duration Floor</h4>
+      <p>150 ms minimum time per joint command. Prevents instantaneous angular jumps that would strip gears or rip brackets.</p>
+    </div>
+    <div class="safety-item">
+      <div class="si-icon">🗑</div>
+      <h4>QoS 0 — No Queue</h4>
+      <p>Old MQTT commands are dropped immediately. No stale command backlog that could cause sudden unexpected movements.</p>
+    </div>
+    <div class="safety-item">
+      <div class="si-icon">🔄</div>
+      <h4>Safe Mode Switching</h4>
+      <p>Mode manager waits for the active motion to complete before switching modes. No mid-trajectory context changes.</p>
+    </div>
+    <div class="safety-item">
+      <div class="si-icon">🏠</div>
+      <h4>Home Position Recovery</h4>
+      <p>Any error, disconnect, or timeout triggers a return to a predefined safe home pose before resuming.</p>
+    </div>
+    <div class="safety-item">
+      <div class="si-icon">📏</div>
+      <h4>URDF Joint Limits</h4>
+      <p>Physical joint limits enforced at URDF level. MoveIt2 OMPL planner respects these limits in all trajectory planning.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- FOOTER -->
+<footer>
+  <div style="font-size:0.9rem;font-weight:700;color:var(--text);margin-bottom:0.5rem">
+    Dual-Mode Vision-Guided Robotic Arm
+  </div>
+  Department of Electronics and Communication Engineering · Academic Year 2025–2026<br/>
+  ROS2 Jazzy · Gazebo Harmonic · MoveIt2 · YOLOv8 · MediaPipe · MQTT · ESP8266 + PCA9685<br/>
+  <span style="color:var(--border)">────────────────────────────────</span><br/>
+  <span style="color:var(--border);font-size:0.7rem">Generated: March 7, 2026</span>
+</footer>
+
+<script>
+  // ── Mode switcher logic ──
+  function switchMode(mode) {
+    document.querySelectorAll('.mode-tab').forEach(t => {
+      t.className = 'mode-tab';
+    });
+    document.querySelectorAll('.mode-panel').forEach(p => {
+      p.classList.remove('active');
+    });
+
+    const tabs = document.querySelectorAll('.mode-tab');
+    const tabMap = { auto: 0, local: 1, remote: 2 };
+    tabs[tabMap[mode]].classList.add('active-' + mode);
+    document.getElementById('panel-' + mode).classList.add('active');
+  }
+
+  // ── Highlight active-tab on load ──
+  document.querySelectorAll('.mode-tab')[0].classList.add('active-auto');
+
+  // ── Intersection Observer: animate lat bars ──
+  const bars = document.querySelectorAll('.lat-bar');
+  const widths = [];
+  bars.forEach(b => {
+    widths.push(b.style.width);
+    b.style.width = '0%';
+  });
+
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        bars.forEach((b, i) => { b.style.width = widths[i]; });
+        obs.disconnect();
+      }
+    });
+  }, { threshold: 0.3 });
+
+  const latSection = document.querySelector('.latency-breakdown');
+  if (latSection) obs.observe(latSection);
+
+  // ── Nav highlight on scroll ──
+  const sections = ['hardware','modes','cameras','nodes','wiring','phases','safety'];
+  const navLinks = document.querySelectorAll('nav a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && window.scrollY >= el.offsetTop - 120) current = id;
+    });
+    navLinks.forEach(a => {
+      a.style.color = '';
+      const href = a.getAttribute('onclick') || '';
+      if (current && href.includes(current)) a.style.color = 'var(--accent)';
+    });
+  });
+</script>
+</body>
+</html>
