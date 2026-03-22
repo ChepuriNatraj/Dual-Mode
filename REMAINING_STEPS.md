@@ -7,9 +7,9 @@ Based on the Dual-Mode Vision-Guided Robotic Arm Master Documentation, here is t
 ---
 
 ## 🟢 Immediate Next Step (Bridge Simulation)
-- [ ] Create `controllers.yaml` to define `joint_state_broadcaster`, `arm_controller` (JointTrajectoryController), and `gripper_controller`.
-- [ ] Update `gazebo.launch.py` to spawn the controllers in Gazebo Harmonic upon boot.
-- [ ] Verify that MoveIt plans executed in RViz successfully actuate the Gazebo physics model in real-time.
+- [x] Create `controllers.yaml` to define `joint_state_broadcaster`, `arm_controller` (JointTrajectoryController), and `gripper_controller`.
+- [x] Update `gazebo.launch.py` to spawn the controllers in Gazebo Harmonic upon boot.
+- [x] Verify that MoveIt plans executed in RViz successfully actuate the Gazebo physics model in real-time.
 
 ## 🔵 Phase 5: Vision Pipeline Setup
 - [ ] Create ROS 2 package: `robot_arm_vision`.
@@ -23,10 +23,10 @@ Based on the Dual-Mode Vision-Guided Robotic Arm Master Documentation, here is t
 - [ ] Implement the full autonomous loop: **Detect Object -> Calculate Grasp Pose -> Plan Path -> Pick -> Drop in Bin -> Return Home**.
 
 ## 🟠 Phase 7: Local Gesture Control
-- [ ] Create ROS 2 package: `robot_arm_gesture`.
-- [ ] Implement MediaPipe Hand Landmarker script (`gesture_node.py`) capturing frames from the laptop webcam.
-- [ ] Map 21-point finger/hand geometries to the robot's specific joint constraints mathematically.
-- [ ] Apply safety angle clamping and exponential smoothing filters to prevent jerky movements hitting the virtual/real servos.
+- [x] Create ROS 2 package: `robot_arm_gesture`.
+- [x] Implement MediaPipe Hand Landmarker script (`gesture_node.py`) capturing frames from the laptop webcam.
+- [x] Map 21-point finger/hand geometries to the robot's specific joint constraints mathematically.
+- [x] Apply safety angle clamping and exponential smoothing filters to prevent jerky movements hitting the virtual/real servos.
 
 ## 🟠 Phase 8: Remote Teleoperation (Internet Control)
 - [ ] Create ROS 2 package: `robot_arm_remote`.
