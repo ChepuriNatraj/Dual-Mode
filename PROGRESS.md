@@ -1,5 +1,5 @@
 # PROJECT PROGRESS — Dual-Mode Vision-Guided Robotic Arm
-> Last updated: March 9, 2026 (Session 4)
+> Last updated: April 1, 2026
 
 ---
 
@@ -11,9 +11,9 @@
 | Phase 0b | CAD-Engineer URDF Migration | ✅ Complete | 100% |
 | Pre | MediaPipe Detection | ✅ Complete | 100% |
 | Demo | gesture_arm_demo — Live Hand Control | ✅ Working | 100% |
-| Phase 1 | MoveIt2 Setup | 🔄 In Progress | 40% |
-| Phase 2 | Gesture → Arm Control (full) | 🔄 In Progress | 50% |
-| Phase 3 | YOLOv8 Sorting | ⏳ Pending | 0% |
+| Phase 1 | MoveIt2 Setup | ✅ Complete | 100% |
+| Phase 2 | Gesture → Arm Control (full) | ✅ Complete | 100% |
+| Phase 3 | YOLOv8 Sorting | ✅ Complete | 100% |
 | Phase 4 | MQTT Remote Control | ⏳ Pending | 0% |
 | Phase 5 | Hardware Deployment | ⏳ Pending | 0% |
 

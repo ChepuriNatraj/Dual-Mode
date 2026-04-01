@@ -1,0 +1,9 @@
+<library path="robot_arm_hardware">
+  <class name="robot_arm_hardware/RobotArmSystemHardware"
+         type="robot_arm_hardware::RobotArmSystemHardware"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      ROS2 Hardware Interface plugin for custom Arduino/ESP robotic arm running via Serial/USB.
+    </description>
+  </class>
+</library>

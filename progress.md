@@ -27,3 +27,13 @@
 
 ## Next Steps
 * [ ] Proceed to Phase 2: Integrate MediaPipe live tracking directly into MoveIt 2's action server to control the simulation dynamically from the webcam.
+
+* [x] **Phase 5**: Developed `robot_arm_vision` with YOLOv8 inference and simulated camera.
+* [x] **Phase 6**: Autonomous Logic successfully implemented (detect, plan, pick, drop).
+* [x] **Phase 7**: `robot_arm_gesture` finalized. MediaPipe hand tracking maps 21-point hand geometries to robotic arm IK endpoints using EMA smoothing.
+
+## Immediate Next Steps (Phase 8 & 9)
+* [ ] Create `robot_arm_remote` ROS 2 package.
+* [ ] Set up HiveMQ Cloud MQTT broker & UI (`index.html`) using MediaPipe.js.
+* [ ] Develop `mqtt_bridge_node.py` to bridge internet telemetry to ROS 2.
+* [ ] Create `robot_arm_mode_manager` for orchestrating state hierarchies (Autonomous vs Local Gesture vs Remote).

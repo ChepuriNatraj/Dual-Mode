@@ -24,11 +24,13 @@ def generate_launch_description():
     )
 
     # Gazebo Sim (Harmonic)
+    pkg_robot_arm_gazebo = get_package_share_directory('robot_arm_gazebo')
+    world_file = os.path.join(pkg_robot_arm_gazebo, 'worlds', 'empty_sensors.sdf')
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')
         ),
-        launch_arguments={'gz_args': '-r empty.sdf -v 4 --physics-engine gz-physics-bullet-featherstone-plugin'}.items(),
+        launch_arguments={'gz_args': f'-r {world_file} -v 4 '}.items(),
     )
 
     # Spawn Robot
@@ -42,11 +44,15 @@ def generate_launch_description():
                    '-z', '0.05'] # Slightly above ground
     )
 
-    # Bridge ROS/Gazebo /clock
+    # Bridge ROS/Gazebo /clock and /camera/image_raw
     bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
-        arguments=['/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'],
+        arguments=[
+            '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
+            '/camera/image_raw@sensor_msgs/msg/Image[gz.msgs.Image',
+            '/camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo'
+        ],
         output='screen'
     )
 
