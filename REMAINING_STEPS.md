@@ -29,11 +29,11 @@ Based on the Dual-Mode Vision-Guided Robotic Arm Master Documentation, here is t
 - [x] Apply safety angle clamping and exponential smoothing filters to prevent jerky movements hitting the virtual/real servos.
 
 ## 🟠 Phase 8: Remote Teleoperation (Internet Control)
-- [ ] Create ROS 2 package: `robot_arm_remote`.
-- [ ] Set up a free HiveMQ Cloud MQTT broker for data streaming.
-- [ ] Create the web controller interface (`index.html`) using MediaPipe.js and Paho MQTT to stream hand poses from a phone browser.
-- [ ] Write `mqtt_bridge_node.py` to listen to HiveMQ from anywhere in the world and locally publish ROS 2 joint commands.
-- [ ] Set up an `ngrok` tunnel for easy global phone access.
+- [x] Create ROS 2 package: `robot_arm_remote`.
+- [x] Set up a free HiveMQ Cloud MQTT broker for data streaming.
+- [x] Create the web controller interface (`index.html`) using MediaPipe.js and Paho MQTT to stream hand poses from a phone browser.
+- [x] Write `mqtt_bridge_node.py` to listen to HiveMQ from anywhere in the world and locally publish ROS 2 joint commands.
+- [x] Set up an `ngrok` tunnel for easy global phone access (optional, web controller used).
 
 ## 🟣 Phase 9: Mode Management Architecture
 - [ ] Create ROS 2 package: `robot_arm_mode_manager`.
@@ -43,10 +43,10 @@ Based on the Dual-Mode Vision-Guided Robotic Arm Master Documentation, here is t
 ## 🟤 Phase 10: Hardware Interface (Bridging to Real World)
 - [x] Write `arm_firmware.ino` using the Adafruit PWM Servo library for the PCA9685 I2C driver board.
 - [x] Create ROS 2 package: `robot_arm_hardware`.
-- [ ] Develop the custom `ros2_control` hardware interface plugin in **C++**. This will override Gazebo's physics plugin and send JointTrajectory commands over Serial (USB) to the Arduino.
+- [x] Develop the custom `ros2_control` hardware interface plugin in **C++**. This will override Gazebo's physics plugin and send JointTrajectory commands over Serial (USB) to the Arduino.
 
 ## 🟤 Phase 11 & 12: Final Integration & Migration
-- [ ] Deploy the software stack to the physical metallic robotic arm.
-- [ ] Calibrate physical servo offsets.
+- [x] Deploy the software stack to the physical metallic robotic arm.
+- [x] Calibrate physical servo offsets.
 - [ ] Run a 50+ cycle stress test for the picking loop.
 - [ ] *(Future Goal)* Migrate the primary ROS2 network and ML inference to a Raspberry Pi 4/5. 

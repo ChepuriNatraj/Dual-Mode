@@ -37,3 +37,12 @@
 * [ ] Set up HiveMQ Cloud MQTT broker & UI (`index.html`) using MediaPipe.js.
 * [ ] Develop `mqtt_bridge_node.py` to bridge internet telemetry to ROS 2.
 * [ ] Create `robot_arm_mode_manager` for orchestrating state hierarchies (Autonomous vs Local Gesture vs Remote).
+
+### Update: April 14, 2026
+* [x] **Phase 7 (Local Gesture Control)**: Fixed a MediaPipe API breaking change (`mediapipe.tasks.python.BaseOptions` -> `mediapipe.tasks.BaseOptions`) in `gesture_node.py` and successfully tested real-time teleoperation mapped to Gazebo/RViz2.
+* [x] **Phase 5 & 6 (Autonomous Sorting & Vision)**: Created `sorting.launch.py` to seamlessly spin up both the Vision node (OpenCV/cv_bridge) and the Sorting Planner node (MoveItPy) concurrently.
+* [x] **Phase 5 & 6 (Autonomous Sorting & Vision)**: Injected `MoveItConfigsBuilder` directly into the `sorting.launch.py` node parameters to ensure `MoveItPy` correctly initializes with the robot's semantic configuration.
+* [x] **Phase 5 & 6 (Autonomous Sorting & Vision)**: Updated `robot_arm_vision`'s `setup.py` to correctly install the `/launch` directory. 
+* [x] **Simulation Testing**: Created a standalone `red_box.sdf` to be spawned dynamically into Gazebo to trigger the camera thresholding and the MoveIt pick-and-place logic.
+
+* [x] **Hardware Setup**: Configured a dedicated portable ESP32 Arduino development environment entirely inside the USB Pendrive (`/media/natraj/UBUNTU 24_0/arduino_esp32_env`) using `arduino-cli` and custom `ARDUINO_DATA_DIR` mapping, to save primary laptop storage. Documented the process in `docs/ESP32_Hardware_Setup.md`.

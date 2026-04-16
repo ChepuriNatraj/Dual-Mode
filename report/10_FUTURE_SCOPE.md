@@ -1,0 +1,9 @@
+# FUTURE SCOPE
+
+1. **Integration of RGB-D Sensing:** To resolve existing visual ambiguities and dependency on planar geometric assumptions, future iterations should incorporate RGB-D sensors (e.g., Intel RealSense, OAK-D). This will natively yield point-cloud data, dramatically enhancing the spatial precision of grasp point generation and dynamic obstacle avoidance.
+2. **Haptic Integration via Wearables:** To compensate for the lack of tactile feedback, development efforts will focus on incorporating lightweight, vibration-based or electro-muscular stimulation wearables onto the operator's hands. These units can map actuator current-draw from the ESP32 directly to physical stimuli on the operator, achieving a closed-loop human experience.
+3. **Reinforcement Learning for Grasping:** The current logic utilizes deterministic Inverse Kinematics to approach identified centroids. Implementing a Reinforcement Learning (RL) agent, trained natively within the Gazebo environment and ported via ONNX, could enable dynamic inference of optimal grasping orientations for complex, unmodeled geometries.
+4. **Edge AI Processing:** Heavy computational loads are currently processed on a central host PC. Transitioning the YOLOv8 and MediaPipe inference directly to Edge AI modules (such as the Jetson Nano or specialized Coral TPU boards mounted directly on the robotic base) will drastically reduce bandwidth requirements and system latency.
+5. **Multi-Agent Coordination:** Scaling the ROS 2 architecture to orchestrate multiple robotic arms synergistically via a unified MoveIt planning scene to execute collaborative assembly tasks.
+
+[FIGURE 14: Conceptual layout for an Edge-AI upgraded architecture featuring a decentralized processing topology with Jetson Nano Integration.] 

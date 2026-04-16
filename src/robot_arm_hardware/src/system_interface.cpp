@@ -136,11 +136,20 @@ hardware_interface::return_type RobotArmSystemHardware::write(
   // Build a comma-separated string of commands in DEGREES
   // Note: ROS uses Radians, so we convert rad -> deg mapping
   std::stringstream ss;
+  
+  // The calibrated home positions (0.0 rad in MoveIt = these degrees in hardware)
+  double home_offsets[6] = {45.0, 0.0, 0.0, 45.0, 90.0, 0.0};
+
   for (std::size_t i = 0; i < hw_commands_.size(); i++)
   {
     // VERY Basic Radian -> Degree Conversion offset logic
-    // Ex: joint command 0.0 rad might be 90 degrees mechanically
-    double degrees = (hw_commands_[i] * 180.0 / M_PI) + 90.0;
+    // Add the specific joint's calibration offset instead of 90.0
+    double degrees = (hw_commands_[i] * 180.0 / M_PI) + home_offsets[i];
+    
+    // Clamp to [0, 180] for standard MG996R servos to prevent hardware stall/damage
+    if (degrees < 0.0) degrees = 0.0;
+    if (degrees > 180.0) degrees = 180.0;
+
     ss << static_cast<int>(degrees);
     
     if(i < hw_commands_.size() - 1){

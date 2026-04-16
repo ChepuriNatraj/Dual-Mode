@@ -14,8 +14,8 @@
 | Phase 1 | MoveIt2 Setup | ✅ Complete | 100% |
 | Phase 2 | Gesture → Arm Control (full) | ✅ Complete | 100% |
 | Phase 3 | YOLOv8 Sorting | ✅ Complete | 100% |
-| Phase 4 | MQTT Remote Control | ⏳ Pending | 0% |
-| Phase 5 | Hardware Deployment | ⏳ Pending | 0% |
+| Phase 4 | MQTT Remote Control | ✅ Complete | 100% |
+| Phase 5 | Hardware Deployment | ⏳ In Progress | 50% |
 
 ---
 
@@ -326,47 +326,43 @@ ros2 launch gesture_arm_demo demo.launch.py
 
 ## Phase 5 — Hardware Deployment ⏳
 
-**Status: NOT STARTED — requires all software phases complete**
+**Status: IN PROGRESS (25%)**
 
 ### Tasks to complete
 
-#### Electronics wiring
-- [ ] Mount PCA9685 on breadboard
-- [ ] PSU barrel → DC Jack → PCA9685 V+ / GND (20-22 AWG, screw terminal)
-- [ ] ESP8266 3.3V → PCA9685 VCC (logic only)
-- [ ] ESP8266 GND → PCA9685 GND (common ground — mandatory)
-- [ ] ESP8266 D1 (GPIO5) → PCA9685 SCL
-- [ ] ESP8266 D2 (GPIO4) → PCA9685 SDA
-- [ ] MPU6050 → same I2C bus (addr 0x68), VCC from ESP8266 3.3V
-- [ ] Connect 6× MG996R servos to PCA9685 CH0–CH5
-- [ ] Power on — verify PCA9685 green LED lit
+#### Environment & Toolchain
+- [x] Bypass FAT32 symlink/file size limitations by reformatting a 64GB USB drive to Ext4 for portable Arduino environments.
+- [x] Install `arduino-cli` environment and ESP32 toolchains (`esp32:esp32@3.3.7`) mounted to `/media/natraj/ARDUINO_USB/arduino_data`.
 
-#### ESP8266 firmware
-- [ ] Set up PlatformIO or Arduino IDE
-- [ ] Write firmware:
-  - I2C master to PCA9685
-  - Receive joint angles over serial from ROS2
-  - Convert radians → PWM microseconds (500–2500 µs)
-  - Write to PCA9685 channels
-- [ ] Flash firmware via micro-USB cable
-- [ ] Test: send known angle → verify servo moves to expected position
+#### Electronics wiring
+- [x] PCA9685 wired and configured for I2C (Address `0x40`).
+- [ ] PSU barrel → DC Jack → PCA9685 V+ / GND (20-22 AWG, screw terminal)
+- [x] ESP32 3.3V → PCA9685 VCC (logic only)
+- [x] ESP32 GND → PCA9685 GND (common ground — mandatory)
+- [x] ESP32 SDA (GPIO21) → PCA9685 SDA
+- [x] ESP32 SCL (GPIO22) → PCA9685 SCL
+- [x] MPU6050 mounted flat to the gripper palm, X-axis pointing forward.
+- [x] MPU6050 → same I2C bus (addr 0x68), VCC from ESP32 3.3V (piggybacks off PCA9685 header).
+- [x] Connect 6× MG996R servos to PCA9685 CH0–CH5.
+
+#### ESP32 firmware
+- [x] Write baseline `firmware.ino` to control PCA9685 (all 6 joints).
+- [x] Write `test_mpu6050.ino` to verify wiring, serial communication, and gravity measurement.
+- [x] Integrate MPU6050 live polling into `firmware.ino` so ESP32 simultaneously parses serial ROS2 commands to joints and returns MPU telemetry via serial (`S:dx,dy,dz|rx,ry,rz`).
+- [x] Flash firmware via USB.
+- [x] Test: manual joint commands (`calibration_tester.py`) successfully moving joints.
 
 #### ros2_control hardware interface
-- [ ] Write `esp8266_hardware_interface.cpp` (or Python wrapper):
+- [ ] Write `esp32_hardware_interface.cpp` (or Python wrapper):
   - Implement `SystemInterface` — `read()` and `write()` methods
-  - Serial communication to ESP8266 at 115200 baud
-- [ ] Update `robot.urdf.xacro` — change `<plugin>` from `gz_ros2_control` to `ros2_control`
-- [ ] Test: same `JointTrajectory` commands that worked in simulation → real arm moves
-
-#### MPU6050 integration
-- [ ] Write `imu_node.py` — read accelerometer + gyroscope from ESP8266 I2C
-- [ ] Compute orientation quaternion (complementary filter or Madgwick)
-- [ ] Publish `/imu/data` → use for drift correction in wrist joint
+  - Serial communication to ESP32 at 115200 baud
+  - Overwrite `/joint_states` for the gripper joint with inverted Roll/Pitch data from the MPU telemetry string for closed-loop physics.
+- [ ] Update `robot.urdf.xacro` — change `<plugin>` to standard `ros2_control` Serial plugin.
+- [ ] Test: same `JointTrajectory` commands that worked in simulation → real arm moves.
 
 #### Final validation
-- [ ] All 3 modes working on real hardware
-- [ ] Safety features tested (timeout, clamping, home recovery)
-- [ ] Latency measured end-to-end (real hardware path)
+- [ ] Live hand tracking moves real arm.
+- [ ] Auto-correction loops based on MPU6050 data accurately countering physical droop.
 
 ---
 

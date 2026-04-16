@@ -18,6 +18,15 @@
 - Fixed MoveIt `joint_limits.yaml` to override 0.0 velocity/acceleration values, enabling Time-Optimal Trajectory planning.
 - Fixed `moveit_controllers.yaml` to include correct `action_ns: follow_joint_trajectory` namespaces.
 - Prevented 5-DOF IK Singularity issues by enabling `position_only_ik: True` in `kinematics.yaml`.
+
+## Hardware Bring-up & Architecture Pivot
+- Successfully reformatted a USB drive to Ext4 to bypass 4GB file size limits and Linux symlink errors (FAT32 restrictions) while installing `arduino-cli` ESP32 packages.
+- Finalized the installation of `esp32:esp32@3.3.7` toolchain mounted portably to `/media/natraj/ARDUINO_USB/arduino_data`.
+- Compiled and uploaded C++ `firmware.ino` for the 6-DOF MG996R robot arm.
+- **Architecture Change:** Decided to keep all 6 servos routed through the PCA9685 driver via I2C for unified wiring.
+- **Architecture Change:** Decided to defer MPU-6050 integration. Reverted to controlling all 6 servos tightly using the open-loop PCA9685 driver via I2C for a simplified initial hardware bring-up.
+- Wrote and compiled `test_mpu6050.ino` to successfully verify I2C wiring and accelerometer gravity readings.
+- Updated main `firmware.ino` to cleanly parse Serial movement commands whilst returning packed MPU telemetry `S:dX,dY,dZ|gX,gY,gZ`.
 - Solved ground collision bug by teaching the addition of virtual Scene Objects in RViz.
 - Status: Fully working MoveIt + ROS2 + Gazebo Harmonic pipeline!
 

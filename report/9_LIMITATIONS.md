@@ -1,0 +1,8 @@
+# LIMITATIONS
+
+1. **Vision System Occlusion and Illumination Susceptibility:** The autonomous vision pipeline relies exclusively on passive RGB optical sensors. Consequentially, deep shadowing, specular reflections off metallic objects, or occlusion by the robotic manipulator itself severely degrade target localization accuracy.
+2. **Lack of Haptic Feedback:** During the human-in-the-loop gesture mode, the operator receives no physical resistance or force-feedback from the environment. This absence of tactile information increases the probability of applying excessive force during precision manipulation tasks, potentially damaging fragile payloads or the manipulator's actuators.
+3. **Network Latency Dependence:** The real-time efficacy of the teleoperation mode is inextricably linked to the network quality bridging the operator PC and the edge ESP32 hardware. Significant jitter or packet loss on the localized MQTT/UDP network directly translates to stuttering, non-deterministic physical movements.
+4. **Mechanical Bandwidth Constraints:** The current actuation utilized heavily relies on PWM-driven servomotors paired with a PCA9685 driver. While adequate for prototyping, these lack high-resolution continuous positional feedback (encoders) and exhibit severe structural compliance, prohibiting high-speed or high-payload industrial deployment.
+
+[FIGURE 13: Example visual frame illustrating a failed YOLOv8 detection due to target occlusion by the robotic end-effector.]

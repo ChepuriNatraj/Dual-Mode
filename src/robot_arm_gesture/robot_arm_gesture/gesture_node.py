@@ -37,7 +37,7 @@ class GestureControlNode(Node):
             self.get_logger().error(f"Model file not found at {model_path}")
             return
 
-        base_options = mp.tasks.python.BaseOptions(model_asset_path=model_path)
+        base_options = mp.tasks.BaseOptions(model_asset_path=model_path)
         options = mp.tasks.vision.HandLandmarkerOptions(
             base_options=base_options,
             num_hands=1,

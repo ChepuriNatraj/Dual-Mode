@@ -38,7 +38,7 @@ class VisionNode(Node):
         self.fy = None
         self.cx = None
         self.cy = None
-        self.camera_height = 0.5  # As defined in camera.xacro (z=0.5m)
+        self.camera_height = 0.8  # As defined in camera.xacro (z=0.8m)
         self.workspace_z = 0.025  # Height of the objects (approx 5cm / 2)
         
         # YOLO setup
@@ -72,14 +72,10 @@ class VisionNode(Node):
         Y_c = (v - self.cy) * Z_c / self.fy
         
         # Transform from camera frame to world base_link frame
-        # In camera.xacro: xyz="0.0 0.5 0.5" rpy="0 1.5708 1.5708"
-        # Since rpy=[0, 90deg, 90deg]: 
-        # Cam Z -> World -Z (down)
-        # Cam X -> World -Y (up in image)
-        # Cam Y -> World -X (left in image)
-        
-        world_x = 0.0 - Y_c
-        world_y = 0.5 - X_c
+        # In camera.xacro: xyz="0.25 0.0 0.8" rpy="0 1.5708 0"
+        # Based on standard ROS camera frame conventions mapped to a 90 degree pitch down
+        world_x = 0.25 + Y_c
+        world_y = 0.0 + X_c
         world_z = self.workspace_z
         
         return (world_x, world_y, world_z)

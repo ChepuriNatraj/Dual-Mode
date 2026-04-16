@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'robot_arm_vision'
+package_name = 'robot_arm_remote'
 
 setup(
     name=package_name,
@@ -10,7 +10,6 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/launch', ['launch/sorting.launch.py']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -25,8 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'vision_node = robot_arm_vision.vision_node:main',
-            'sorting_planner_node = robot_arm_vision.sorting_planner_node:main'
+            'mqtt_bridge_node = robot_arm_remote.mqtt_bridge_node:main'
         ],
     },
 )

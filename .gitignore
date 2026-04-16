@@ -1,23 +1,31 @@
-# ROS 2 / colcon build outputs
+# ROS 2 workspaces
 build/
 install/
 log/
+*_compile_commands.json
 
-# Python
-__pycache__/
+# Python Virtual Environments
+.venv/
+env/
+venv/
 *.pyc
-*.pyo
-*.pyd
+__pycache__/
 
-# Logs and generated artifacts
-*.log
-*.tmp
+# Machine Learning Models (huge files)
+*.pt
+*yolov8n.pt
+*.onnx
 
-# Office and binary exports
-*.pdf
-*.docx
-
-# IDE and OS
+# IDE files
 .vscode/
 .idea/
-.DS_Store
+
+# ESP32 / Arduino build artifacts
+*.elf
+*.bin
+*.hex
+*.part
+arduino_staging/
+arduino_tmp/
+arduino_staging/
+arduino_tmp/

@@ -13,7 +13,7 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x40);
 
 // Buffer for parsing serial commands
 const int MAX_JOINTS = 6;
-int servo_targets[MAX_JOINTS] = {90, 90, 90, 90, 90, 90}; // Default positions in degrees
+int servo_targets[MAX_JOINTS] = {45, 0, 0, 45, 90, 0}; // Calibrated Home positions in degrees
 
 void setup() {
   Serial.begin(115200);
@@ -21,6 +21,9 @@ void setup() {
     delay(10); // Wait for serial port to connect
   }
   
+  // Explicitly set ESP32 default I2C pins (SDA=21, SCL=22)
+  Wire.begin(21, 22);
+
   pwm.begin();
   pwm.setOscillatorFrequency(27000000);
   pwm.setPWMFreq(SERVO_FREQ); 
