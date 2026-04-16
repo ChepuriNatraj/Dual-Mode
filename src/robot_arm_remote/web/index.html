@@ -61,10 +61,10 @@
 
         // MQTT Setup (Public HiveMQ Broker over websockets for easy prototype)
         const MQTT_BROKER = "broker.hivemq.com";
-        const MQTT_PORT = 8000;
+        const MQTT_PORT = 8884; // Use port 8884 for wss (Secure WebSockets required by GitHub Pages)
         const MQTT_TOPIC = "natraj/robot_arm/teleop/target_state";
         const client_id = "web_controller_" + Math.random().toString(16).substr(2, 8);
-        const mqttClient = new Paho.MQTT.Client(MQTT_BROKER, MQTT_PORT, client_id);
+        const mqttClient = new Paho.MQTT.Client(MQTT_BROKER, MQTT_PORT, "/mqtt", client_id); // HiveMQ needs /mqtt path
         let mqttConnected = false;
 
         // Joint Range configs (Matches GestureNode)
@@ -92,6 +92,7 @@
         mqttBtn.addEventListener("click", () => {
             statusDiv.innerHTML = "Connecting to HiveMQ MQTT Broker...";
             mqttClient.connect({
+                useSSL: true,
                 onSuccess: () => {
                     statusDiv.innerHTML = "MQTT: ✓ Connected to " + MQTT_BROKER;
                     mqttConnected = true;
