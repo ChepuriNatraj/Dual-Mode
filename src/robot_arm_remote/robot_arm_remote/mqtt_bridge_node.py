@@ -21,6 +21,8 @@ class MqttBridgeNode(Node):
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
+
+        self.rx_count = 0
         
         self.get_logger().info(f"Connecting to MQTT broker at {self.broker}:{self.port}...")
         self.client.connect(self.broker, self.port, 60)
@@ -34,12 +36,25 @@ class MqttBridgeNode(Node):
     def on_message(self, client, userdata, msg):
         try:
             payload = json.loads(msg.payload.decode('utf-8'))
+
+            if 'arm_angles' not in payload or 'gripper_angle' not in payload:
+                self.get_logger().warn(f"Invalid payload keys on {msg.topic}: {payload}")
+                return
+
             arr_angles = payload['arm_angles']
             grip_angle = payload['gripper_angle']
+
+            if not isinstance(arr_angles, list) or len(arr_angles) != 5:
+                self.get_logger().warn(f"Invalid arm_angles length/type: {arr_angles}")
+                return
             
             # Send to local ROS2 system
             self.publish_arm(arr_angles)
             self.publish_gripper(grip_angle)
+
+            self.rx_count += 1
+            if self.rx_count % 20 == 0:
+                self.get_logger().info(f"MQTT messages received: {self.rx_count}")
             
         except Exception as e:
             self.get_logger().error(f"Error parsing MQTT message: {e}")

@@ -59,17 +59,22 @@
         const cameraBtn = document.getElementById("cameraBtn");
         const mqttBtn = document.getElementById("mqttBtn");
 
-        // MQTT Setup (Public HiveMQ Broker over websockets for easy prototype)
-        const MQTT_BROKER = "broker.hivemq.com";
-        const MQTT_PORT = 8000; // Use WS port for broader file:// compatibility
+        // MQTT Setup (WebSockets for browser clients)
         const MQTT_TOPIC = "natraj/robot_arm/teleop/target_state";
-        const client_id = "web_controller_" + Math.random().toString(16).substr(2, 8);
-        
-        // Connect securely if hosted on https, otherwise use ws for local file:// testing
-        const isSecure = window.location.protocol === "https:";
-        const port = isSecure ? 8884 : 8000;
-        const mqttClient = new Paho.MQTT.Client(MQTT_BROKER, port, "/mqtt", client_id);
+        const isHttps = window.location.protocol === "https:";
+        const DEFAULT_ENDPOINTS = [
+            { host: "broker.hivemq.com", port: 8884, path: "/mqtt", useSSL: true, label: "HiveMQ WSS" },
+            { host: "broker.hivemq.com", port: 8000, path: "/mqtt", useSSL: false, label: "HiveMQ WS" }
+        ];
+
+        // Browser security blocks ws:// on https pages, so keep only TLS endpoint there.
+        const MQTT_ENDPOINTS = isHttps
+            ? DEFAULT_ENDPOINTS.filter((e) => e.useSSL)
+            : DEFAULT_ENDPOINTS;
+
+        let mqttClient = null;
         let mqttConnected = false;
+        let endpointIndex = 0;
 
         // Joint Range configs (Matches GestureNode)
         const J1_RANGE = [-1.57, 1.57];
@@ -88,28 +93,64 @@
         const clamp = (val, min_v, max_v) => Math.max(min_v, Math.min(val, max_v));
 
         // Connect to MQTT
-        mqttClient.onConnectionLost = (responseObject) => {
-            if (responseObject.errorCode !== 0) statusDiv.innerHTML = "MQTT: Connection Lost: " + responseObject.errorMessage;
-            mqttConnected = false;
-        };
+        function createMqttClient(endpoint) {
+            const clientId = "web_controller_" + Math.random().toString(16).slice(2, 10);
+            const client = new Paho.MQTT.Client(endpoint.host, endpoint.port, endpoint.path, clientId);
 
-        mqttBtn.addEventListener("click", () => {
-            statusDiv.innerHTML = "Connecting to HiveMQ MQTT Broker...";
-            
+            client.onConnectionLost = (responseObject) => {
+                if (responseObject.errorCode !== 0) {
+                    statusDiv.innerHTML = "MQTT: Connection Lost: " + responseObject.errorMessage;
+                }
+                mqttConnected = false;
+                mqttBtn.innerText = "Connect to Robot";
+                mqttBtn.style.backgroundColor = "#0078d7";
+            };
+
+            return client;
+        }
+
+        function connectWithEndpoint(endpoint) {
+            mqttClient = createMqttClient(endpoint);
+            statusDiv.innerHTML = `Connecting to ${endpoint.label} (${endpoint.host}:${endpoint.port})...`;
+
             mqttClient.connect({
-                useSSL: isSecure,
-                timeout: 5,
+                useSSL: endpoint.useSSL,
+                timeout: 10,
+                keepAliveInterval: 30,
+                cleanSession: true,
+                reconnect: true,
+                mqttVersion: 4,
                 onSuccess: () => {
-                    statusDiv.innerHTML = "MQTT: ✓ Connected to " + MQTT_BROKER;
                     mqttConnected = true;
+                    statusDiv.innerHTML = `MQTT: Connected to ${endpoint.host}:${endpoint.port}`;
                     mqttBtn.innerText = "Connected";
                     mqttBtn.style.backgroundColor = "green";
                 },
                 onFailure: (err) => {
-                    statusDiv.innerHTML = "MQTT: ✗ Connection failed: " + (err.errorMessage || JSON.stringify(err));
+                    const reason = err?.errorMessage || JSON.stringify(err);
                     console.error("MQTT Connect Error:", err);
+
+                    // Try alternate endpoint only on non-https pages.
+                    if (!isHttps && endpointIndex + 1 < MQTT_ENDPOINTS.length) {
+                        endpointIndex += 1;
+                        connectWithEndpoint(MQTT_ENDPOINTS[endpointIndex]);
+                        return;
+                    }
+
+                    statusDiv.innerHTML = `MQTT: Connection failed (${endpoint.host}:${endpoint.port}) - ${reason}`;
+                    mqttConnected = false;
                 }
             });
+        }
+
+        mqttBtn.addEventListener("click", () => {
+            if (mqttConnected) {
+                statusDiv.innerHTML = "MQTT: Already connected";
+                return;
+            }
+
+            endpointIndex = 0;
+            connectWithEndpoint(MQTT_ENDPOINTS[endpointIndex]);
         });
 
         // Initialize MediaPipe
@@ -211,7 +252,7 @@
                 dataPanel.innerHTML = `J1: ${current_angles[0].toFixed(2)} | J2: ${current_angles[1].toFixed(2)} | J3: ${current_angles[2].toFixed(2)}<br>J4: ${current_angles[3].toFixed(2)} | J5: ${current_angles[4].toFixed(2)} | Grip: ${current_gripper.toFixed(2)}`;
 
                 // Publish to MQTT
-                if (mqttConnected && results.landmarks.length > 0) {
+                if (mqttConnected && results.landmarks && results.landmarks.length > 0) {
                     let payload = {
                         arm_angles: current_angles,
                         gripper_angle: current_gripper
