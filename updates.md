@@ -30,3 +30,13 @@
 - Solved ground collision bug by teaching the addition of virtual Scene Objects in RViz.
 - Status: Fully working MoveIt + ROS2 + Gazebo Harmonic pipeline!
 
+
+## Remote Teleoperation & Hardware Integration Complete
+- **Phase 8 (MQTT Remote Teleoperation):** Scaffolded the complete `robot_arm_remote` ROS 2 package running `mqtt_bridge_node.py` alongside a fully independent JavaScript MediaPipe client in `index.html`.
+- **Public Hosting Support:** Secured the Web client to pass traffic via `wss://broker.hivemq.com:8884` using TLS paths so the static teleoperation endpoint natively hosts safely over GitHub Pages for remote zero-infrastructure UI control.
+- **Python Environment Overrides:** Subverted ROS 2 `colcon` isolating python packages by correctly installing `paho-mqtt` at the system level out of the `ai_venv` boundary (`--break-system-packages` flag).
+- **Phase 5 (AI Pre-scaffolding):** Scaffolded `esp32_camera.ino` (MJPEG Server firmware) and its companion YOLOv8 receiver node (`esp32_cam_test.py`) for the upcoming AI vision phase.
+
+## Current Debugging & Optimization Findings Supported
+- **Resolved Gripper Singularity/Reversal Issue:** Discovered that the gripper joint's physical servo rotation operated inversely to the MediaPipe/MoveIt assigned coordinate limits (opened when commanded close). Fixed this by updating `src/robot_arm_hardware/src/system_interface.cpp` to explicitly invert the 6th joint (`degrees = -(hw_commands_[i] * 180.0 / M_PI) + home_offsets[i]`).
+- **Diagnosis of Servo Overload Under Gravity:** Documented why MG996R servos drop out, droop, or fail to hold position over time when fighting gravity without proper mechanical leverage. The servos either hit a thermal shutdown from internal overheating (stall current at high duty cycles) or the PCA9685/Power Supply causes a systemic voltage droop, resulting in loss of holding torque under heavy 6-DOF sustained loads.

@@ -46,3 +46,9 @@
 * [x] **Simulation Testing**: Created a standalone `red_box.sdf` to be spawned dynamically into Gazebo to trigger the camera thresholding and the MoveIt pick-and-place logic.
 
 * [x] **Hardware Setup**: Configured a dedicated portable ESP32 Arduino development environment entirely inside the USB Pendrive (`/media/natraj/UBUNTU 24_0/arduino_esp32_env`) using `arduino-cli` and custom `ARDUINO_DATA_DIR` mapping, to save primary laptop storage. Documented the process in `docs/ESP32_Hardware_Setup.md`.
+
+### Update: April 16, 2026
+* [x] **Hardware Validation & Calibration**: Corrected actual servo kinematic bounds by flashing strict home offsets (`{45.0, 0.0, 0.0, 45.0, 90.0, 0.0}`) deep inside the C++ `system_interface.cpp` translation parser and corresponding `.ino` logic to sync the physical arm directly to RViz.
+* [x] **Phase 8 (MQTT Remote Teleoperation)**: Developed the `robot_arm_remote` package running `mqtt_bridge_node.py` to seamlessly pass target trajectories directly from a HiveMQ MQTT Broker topic (`natraj/robot_arm/teleop/target_state`) to the ROS2 controller. Fixed dependency injection issues for `paho-mqtt`.
+* [x] **Phase 8 (MediaPipe Web Frontend)**: Crafted `index.html` to independently track client hand gestures parsing through JS/MediaPipe. Configured correct `wss` ports (`8884`) and TLS paths (`/mqtt`) for direct, secure public 0-infrastructure hosting natively over GitHub Pages!
+* [x] **Phase 5 (ESP32-Cam AI Hardware)**: Pre-scaffolded firmware `esp32_camera.ino` (MJPEG Server) to stream frames wirelessly off the hardware alongside an integrated `esp32_cam_test.py` OpenCV YOLOv8 processor hook to prepare for subsequent hardware autonomy testing.

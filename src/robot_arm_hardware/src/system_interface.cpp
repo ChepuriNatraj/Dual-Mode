@@ -144,7 +144,15 @@ hardware_interface::return_type RobotArmSystemHardware::write(
   {
     // VERY Basic Radian -> Degree Conversion offset logic
     // Add the specific joint's calibration offset instead of 90.0
-    double degrees = (hw_commands_[i] * 180.0 / M_PI) + home_offsets[i];
+    double degrees = 0.0;
+    
+    // Joint 5 is the Gripper (6th joint)
+    if (i == 5) {
+      // Invert the gripper servo to correctly match MoveIt's Open/Close convention
+      degrees = -(hw_commands_[i] * 180.0 / M_PI) + home_offsets[i];
+    } else {
+      degrees = (hw_commands_[i] * 180.0 / M_PI) + home_offsets[i];
+    }
     
     // Clamp to [0, 180] for standard MG996R servos to prevent hardware stall/damage
     if (degrees < 0.0) degrees = 0.0;

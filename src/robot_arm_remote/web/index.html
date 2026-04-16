@@ -61,10 +61,14 @@
 
         // MQTT Setup (Public HiveMQ Broker over websockets for easy prototype)
         const MQTT_BROKER = "broker.hivemq.com";
-        const MQTT_PORT = 8884; // Use port 8884 for wss (Secure WebSockets required by GitHub Pages)
+        const MQTT_PORT = 8000; // Use WS port for broader file:// compatibility
         const MQTT_TOPIC = "natraj/robot_arm/teleop/target_state";
         const client_id = "web_controller_" + Math.random().toString(16).substr(2, 8);
-        const mqttClient = new Paho.MQTT.Client(MQTT_BROKER, MQTT_PORT, "/mqtt", client_id); // HiveMQ needs /mqtt path
+        
+        // Connect securely if hosted on https, otherwise use ws for local file:// testing
+        const isSecure = window.location.protocol === "https:";
+        const port = isSecure ? 8884 : 8000;
+        const mqttClient = new Paho.MQTT.Client(MQTT_BROKER, port, "/mqtt", client_id);
         let mqttConnected = false;
 
         // Joint Range configs (Matches GestureNode)
@@ -91,16 +95,19 @@
 
         mqttBtn.addEventListener("click", () => {
             statusDiv.innerHTML = "Connecting to HiveMQ MQTT Broker...";
+            
             mqttClient.connect({
-                useSSL: true,
+                useSSL: isSecure,
+                timeout: 5,
                 onSuccess: () => {
                     statusDiv.innerHTML = "MQTT: ✓ Connected to " + MQTT_BROKER;
                     mqttConnected = true;
                     mqttBtn.innerText = "Connected";
                     mqttBtn.style.backgroundColor = "green";
                 },
-                onFailure: (msg) => {
-                    statusDiv.innerHTML = "MQTT: ✗ Connection failed: " + msg.errorMessage;
+                onFailure: (err) => {
+                    statusDiv.innerHTML = "MQTT: ✗ Connection failed: " + (err.errorMessage || JSON.stringify(err));
+                    console.error("MQTT Connect Error:", err);
                 }
             });
         });

@@ -289,30 +289,21 @@ ros2 launch gesture_arm_demo demo.launch.py
 
 ---
 
-## Phase 4 — MQTT Remote Control ⏳
+## Phase 4 — MQTT Remote Control ✅
 
-**Status: NOT STARTED**
+**Status: COMPLETE**
 
-### Tasks to complete
-- [ ] Create HiveMQ Cloud account — free tier (100 connections)
-- [ ] Note broker URL, port (8883 SSL), username, password
-- [ ] Install paho-mqtt:
-  ```bash
-  pip install paho-mqtt
-  ```
-- [ ] Write `mqtt_bridge_node.py`:
-  - Subscribe to `arm/joints` topic on HiveMQ
-  - Deserialise JSON `{j1, j2, j3, j4, j5, j6}` → degrees → radians
-  - Publish `JointTrajectory` → `/arm_controller`
-  - Publish latency feedback back to phone
-- [ ] Write Flask web app (`web_app/app.py` + `templates/index.html`):
-  - Serve a single HTML page
-  - Page activates front camera
-  - MediaPipe.js processes landmarks in browser
-  - Maps to joint angles (same formula as gesture_node.py)
-  - Publishes JSON via MQTT.js to HiveMQ
-  - Displays live latency counter
-- [ ] Install and configure ngrok:
+### What was done
+- [x] Set up public HiveMQ Broker (`broker.hivemq.com`) for completely cloud/wireless MQTT handshakes
+- [x] Resolved ROS 2 python virtual environment (Shebang interpreter) to allow `paho-mqtt` global execution
+- [x] Configured native JS script in `index.html` loading MediaPipe Vision frameworks directly in the browser
+- [x] Connected web client directly to HiveMQ passing tracking angles to `natraj/robot_arm/teleop/target_state`
+- [x] Updated web-client configuration (`wss://`, port `8884`, `useSSL: true`) to easily host the front-end controller directly natively off GitHub Pages
+- [x] Developed python `mqtt_bridge_node.py` wrapper to asynchronously fetch incoming teleop payloads and relay direct position actuation directly to RViz/MoveIt.
+
+### Files produced
+- `src/robot_arm_remote/robot_arm_remote/mqtt_bridge_node.py`
+- `src/robot_arm_remote/web/index.html`
   ```bash
   ngrok http 5000
   ```
@@ -333,6 +324,12 @@ ros2 launch gesture_arm_demo demo.launch.py
 #### Environment & Toolchain
 - [x] Bypass FAT32 symlink/file size limitations by reformatting a 64GB USB drive to Ext4 for portable Arduino environments.
 - [x] Install `arduino-cli` environment and ESP32 toolchains (`esp32:esp32@3.3.7`) mounted to `/media/natraj/ARDUINO_USB/arduino_data`.
+- [x] Tested python virtual environments (`ai_venv` vs system Python) to resolve isolated MoveIt 2 module errors. 
+- [x] Implemented mathematical home offsets inside the C++ `RobotArmSystemHardware` file (`{45, 0, 0, 45, 90, 0}`) to map physical servo kinematics to RViz visual geometry.
+
+#### Vision & Autonomous AI (ESP32-CAM)
+- [x] Scaffolded `esp32_camera.ino` containing the native MJPEG server stream generator for the embedded AI camera.
+- [x] Prepared the python OpenCV hook `esp32_cam_test.py` to stream frames from ESP32-CAM and inject them to ultralytics YOLOv8 real-time detection networks.
 
 #### Electronics wiring
 - [x] PCA9685 wired and configured for I2C (Address `0x40`).

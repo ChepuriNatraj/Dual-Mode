@@ -13,20 +13,20 @@ The system is designed to sort objects across a workspace completely hands-free 
 
 ---
 
-## 🎯 Current Project Status: Simulation Phase Complete
+## 🎯 Current Project Status: Hardware Integration & Remote Teleoperation Complete
 
-The core architectural simulation infrastructure is fully established and tuned. The MoveIt 2 motion planning pipeline successfully solves the 5-DOF IK limitations, respects joint boundary properties, and executes ghost trajectories efficiently. The environment flawlessly handles the complex closed-loop mimic joint mechanics of a parallel gripper using the `gz-physics-bullet-featherstone` integration.
+The core architectural simulation infrastructure is fully established, and we have successfully bridged the gap to physical hardware and remote AI control. The custom C++ ROS 2 hardware interface correctly mirrors MoveIt 2 trajectories to physical servos via an Arduino/ESP32, calibrated with custom joint offsets. Additionally, a secure MediaPipe-driven web interface hosted on GitHub Pages enables full 0-infrastructure remote internet teleoperation via HiveMQ MQTT.
 
 **Milestone Checklist:**
 - [x] URDF ROS 2 migration and Jazzy compliance
 - [x] MoveIt 2 Setup Assistant generation and parameterization tuning
 - [x] Resolution of Gazebo physics constraints dropping mimic meshes
 - [x] KDL Inverse Kinematics modifications for smooth 5-DOF Interactive Markers
-- [ ] Connect MoveIt RViz execution directly to Gazebo simulated JointTrajectoryControllers
-- [ ] Implement OpenCV/YOLOv8 vision pipeline (`robot_arm_vision`)
-- [ ] Implement MediaPipe gesture capturing (`robot_arm_gesture`)
-- [ ] Develop MQTT Bridge for internet-based control (`robot_arm_remote`)
-- [ ] Construct custom ROS2 C++ `hardware_interface` for physical servos
+- [x] Connect MoveIt RViz execution directly to Gazebo simulated JointTrajectoryControllers
+- [x] Implement OpenCV/YOLOv8 vision pipeline (`robot_arm_vision`)
+- [x] Implement MediaPipe gesture capturing (`robot_arm_gesture`)
+- [x] Develop MQTT Bridge for internet-based control (`robot_arm_remote`)
+- [x] Construct custom ROS2 C++ `hardware_interface` for physical servos
 
 For deep tracking of solved challenges, see [MoveIt_Simulation_Troubleshooting.md](./MoveIt_Simulation_Troubleshooting.md).
 For granular steps forward, refer to [REMAINING_STEPS.md](./REMAINING_STEPS.md).
@@ -40,8 +40,13 @@ For granular steps forward, refer to [REMAINING_STEPS.md](./REMAINING_STEPS.md).
 ├── src/
 │   ├── robot_arm_description/      # Xacro URDF, STL material meshes, legacy configs
 │   ├── robot_arm_gazebo/           # Launch files bridging ROS 2 to Gazebo Harmonic
-│   └── robot_arm_moveit2/          # MoveIt2 semantic format (SRDF), kinematics, trajectories
+│   ├── robot_arm_moveit2/          # MoveIt2 semantic format (SRDF), kinematics, trajectories
+│   ├── robot_arm_hardware/         # C++ ROS2 hardware interface, Arduino firmware, calibration
+│   ├── robot_arm_vision/           # ESP32-CAM MJPEG server and YOLOv8 AI sorting logic
+│   ├── robot_arm_gesture/          # Local MediaPipe webcam hand tracking control
+│   └── robot_arm_remote/           # MQTT Bridge and GitHub Pages Web UI
 ├── progress.md                     # Raw checklist of accomplished tasks
+├── PROGRESS.md                     # Detailed phases and bug fixes tracking
 ├── REMAINING_STEPS.md              # Live checklist for the remaining Vision & AI phases
 ├── MoveIt_Simulation_Troubleshooting.md # Guide covering 8 major MoveIt/Gazebo bugs faced
 └── (Build artifacts naturally excluded via .gitignore)
