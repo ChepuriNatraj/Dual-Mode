@@ -19,6 +19,22 @@
 
 ---
 
+## Latest Update — April 19, 2026
+
+### Web Deployment Reliability + PWA Rollout ✅
+- [x] Added GitHub Actions workflow: `.github/workflows/deploy-pages.yml`.
+- [x] Enabled **automatic deployment on every push to `main`** using GitHub Pages Actions.
+- [x] Fixed split-page inconsistency by publishing both pages from one build artifact:
+  - Remote app: `/index.html` and `/remote/index.html`
+  - Separate visual page: `/system-visual.html` and `/docs/system_visual.html`
+- [x] Upgraded remote UI into a proper installable **PWA**:
+  - `manifest.webmanifest`
+  - `service-worker.js`
+  - app icons (`icon.svg`, `icon-maskable.svg`)
+- [x] Added cross-links between the remote controller and the system visual page for easier navigation.
+
+---
+
 ## Phase 0 — URDF & Simulation Environment ✅
 
 **Status: COMPLETE**

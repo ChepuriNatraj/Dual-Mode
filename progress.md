@@ -52,3 +52,9 @@
 * [x] **Phase 8 (MQTT Remote Teleoperation)**: Developed the `robot_arm_remote` package running `mqtt_bridge_node.py` to seamlessly pass target trajectories directly from a HiveMQ MQTT Broker topic (`natraj/robot_arm/teleop/target_state`) to the ROS2 controller. Fixed dependency injection issues for `paho-mqtt`.
 * [x] **Phase 8 (MediaPipe Web Frontend)**: Crafted `index.html` to independently track client hand gestures parsing through JS/MediaPipe. Configured correct `wss` ports (`8884`) and TLS paths (`/mqtt`) for direct, secure public 0-infrastructure hosting natively over GitHub Pages!
 * [x] **Phase 5 (ESP32-Cam AI Hardware)**: Pre-scaffolded firmware `esp32_camera.ino` (MJPEG Server) to stream frames wirelessly off the hardware alongside an integrated `esp32_cam_test.py` OpenCV YOLOv8 processor hook to prepare for subsequent hardware autonomy testing.
+
+### Update: April 19, 2026
+* [x] **GitHub Pages Auto-Deployment Fix**: Added `.github/workflows/deploy-pages.yml` so every push to `main` now triggers automatic build and publish via GitHub Actions.
+* [x] **Multi-Page Deployment Sync**: Configured deployment bundle to publish both the remote controller and the separate visual page together, preventing stale page mismatches.
+* [x] **Installable Web App (PWA)**: Upgraded `src/robot_arm_remote/web/index.html` with manifest + service worker support for mobile install (`Add to Home Screen` / standalone launch).
+* [x] **Cross-Page Navigation**: Added direct links between `index.html` and `docs/system_visual.html` to make both hosted pages discoverable from either entry point.

@@ -40,3 +40,10 @@
 ## Current Debugging & Optimization Findings Supported
 - **Resolved Gripper Singularity/Reversal Issue:** Discovered that the gripper joint's physical servo rotation operated inversely to the MediaPipe/MoveIt assigned coordinate limits (opened when commanded close). Fixed this by updating `src/robot_arm_hardware/src/system_interface.cpp` to explicitly invert the 6th joint (`degrees = -(hw_commands_[i] * 180.0 / M_PI) + home_offsets[i]`).
 - **Diagnosis of Servo Overload Under Gravity:** Documented why MG996R servos drop out, droop, or fail to hold position over time when fighting gravity without proper mechanical leverage. The servos either hit a thermal shutdown from internal overheating (stall current at high duty cycles) or the PCA9685/Power Supply causes a systemic voltage droop, resulting in loss of holding torque under heavy 6-DOF sustained loads.
+
+## Latest Web Deployment Fixes (April 19, 2026)
+- Added `.github/workflows/deploy-pages.yml` to ensure pushes to `main` auto-deploy via GitHub Pages Actions.
+- Built a single `_site` artifact that now ships both hosted pages together (remote controller + separate visual page), preventing out-of-sync updates.
+- Upgraded `src/robot_arm_remote/web/index.html` into an installable PWA (manifest, service worker, app icons, standalone launch support).
+- Added bidirectional links between the remote control page and `docs/system_visual.html` so both published pages stay connected.
+- Pushed deployment fix commit to GitHub so the workflow is active in remote history.
