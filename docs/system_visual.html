@@ -334,6 +334,7 @@ arduino-cli monitor -p /dev/ttyUSB0 -b 115200 --config-file "$ARDUINO_DATA_DIR/a
 <!-- NAV -->
 <nav>
   <div class="logo">⚙ ROBOTIC ARM</div>
+  <a onclick="document.getElementById('webapp').scrollIntoView()">Web App</a>
   <a onclick="document.getElementById('modes').scrollIntoView()">Modes</a>
   <a onclick="document.getElementById('cameras').scrollIntoView()">Cameras</a>
   <a onclick="document.getElementById('nodes').scrollIntoView()">ROS2 Graph</a>
@@ -362,6 +363,48 @@ arduino-cli monitor -p /dev/ttyUSB0 -b 115200 --config-file "$ARDUINO_DATA_DIR/a
     <span class="arrow">↓</span>
   </div>
 </div>
+
+<hr class="divider" />
+
+<!-- WEB APP ACCESS -->
+<section id="webapp">
+  <div class="section-label">Remote Console</div>
+  <div class="section-title">Installable Mobile Web App</div>
+  <div class="section-sub">The remote controller is now built as a PWA with joystick controls, install prompt support, and mobile-first responsiveness.</div>
+
+  <div class="arch-grid">
+    <div class="arch-card">
+      <div class="icon">📲</div>
+      <h4>PWA Install (Android + iOS)</h4>
+      <p>Open the remote console in your phone browser and use Add to Home Screen / Install App. It launches like a native application in standalone mode.</p>
+      <span class="tag" style="background:rgba(16,185,129,0.12);color:var(--auto-color)">Supported ✓</span>
+    </div>
+    <div class="arch-card">
+      <div class="icon">🎮</div>
+      <h4>Precision Joystick Mode</h4>
+      <p>Dual virtual joysticks + dedicated wrist/gripper hold buttons reduce accidental jumps compared to camera-only control on mobile.</p>
+      <span class="tag" style="background:rgba(0,212,255,0.12);color:var(--local-color)">Low Latency</span>
+    </div>
+    <div class="arch-card">
+      <div class="icon">🧰</div>
+      <h4>Control Tuning Panel</h4>
+      <p>Runtime sliders for speed, deadzone, smoothing, and publish rate allow quick tuning based on network conditions and operator preference.</p>
+      <span class="tag" style="background:rgba(124,58,237,0.12);color:var(--remote-color)">Operator Friendly</span>
+    </div>
+    <div class="arch-card">
+      <div class="icon">⏹</div>
+      <h4>Reset Pose Safety</h4>
+      <p>A dedicated reset command immediately returns target joints to neutral values for safe recovery when remote motion becomes unstable.</p>
+      <span class="tag" style="background:rgba(245,158,11,0.12);color:var(--warn)">Safety Focus</span>
+    </div>
+  </div>
+
+  <div class="latency-breakdown">
+    <div class="lat-row"><strong>Controller URL:</strong> <span>/src/robot_arm_remote/web/index.html</span></div>
+    <div class="lat-row"><strong>Install tip:</strong> <span>Use HTTPS host, then tap "Install App" in the controller UI.</span></div>
+    <div class="lat-row"><strong>MQTT topic:</strong> <span>natraj/robot_arm/teleop/target_state</span></div>
+  </div>
+</section>
 
 <hr class="divider" />
 

@@ -2,274 +2,813 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Robot Arm Remote Controller</title>
-    
-    <!-- MoveIt/Gazebo styles -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0e1118">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ArmOps">
+    <title>ArmOps Remote Console</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" href="./icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="./icon.svg">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1b1b1b; color: white; text-align: center; margin: 0; padding: 20px; }
-        video { transform: scaleX(-1); border-radius: 10px; width: 100%; max-width: 640px; margin-top: 10px; border: 2px solid #555;}
-        canvas { position: absolute; top: 0; left: 0; transform: scaleX(-1); width: 100%; max-width: 640px; }
-        .video-container { position: relative; display: inline-block; }
-        button { padding: 10px 20px; font-size: 16px; font-weight: bold; background: #0078d7; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 10px; }
-        button:hover { background: #005a9e; }
-        #status { font-size: 14px; margin-top: 10px; color: #88c0d0; }
-        .data-panel { background: #2e3440; padding: 10px; width: 300px; margin: 10px auto; border-radius: 10px; font-family: monospace; }
+        :root {
+            --bg: #0e1118;
+            --card: #171c26;
+            --card-2: #202736;
+            --line: #2c3447;
+            --text: #e8edf7;
+            --muted: #9da8bf;
+            --primary: #00a3ff;
+            --accent: #f89f1b;
+            --ok: #30d17b;
+            --err: #ef5350;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: radial-gradient(circle at 25% 20%, #162033 0%, var(--bg) 45%), var(--bg);
+            color: var(--text);
+            font-family: "Segoe UI", "Tahoma", "Verdana", sans-serif;
+            min-height: 100vh;
+        }
+        .app {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 16px;
+            display: grid;
+            gap: 12px;
+            grid-template-rows: auto auto 1fr auto;
+            min-height: 100vh;
+        }
+        .topbar {
+            background: rgba(16, 20, 30, 0.88);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            backdrop-filter: blur(6px);
+        }
+        .title-wrap {
+            display: grid;
+            gap: 2px;
+        }
+        .title {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+        }
+        .subtitle {
+            margin: 0;
+            color: var(--muted);
+            font-size: 12px;
+        }
+        .chips {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .chip {
+            border: 1px solid var(--line);
+            background: var(--card);
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        .chip.ok {
+            border-color: rgba(48, 209, 123, 0.6);
+            color: var(--ok);
+        }
+        .chip.err {
+            border-color: rgba(239, 83, 80, 0.6);
+            color: var(--err);
+        }
+        .tab-bar {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .tab-btn {
+            border: 1px solid var(--line);
+            background: var(--card);
+            color: var(--muted);
+            border-radius: 12px;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: 0.2s ease;
+        }
+        .tab-btn.active {
+            color: var(--text);
+            border-color: rgba(0, 163, 255, 0.55);
+            background: linear-gradient(180deg, rgba(0, 163, 255, 0.18), rgba(0, 163, 255, 0.05));
+        }
+        .content {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 12px;
+            min-height: 0;
+        }
+        .card {
+            background: rgba(21, 27, 38, 0.94);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 12px;
+            min-height: 0;
+        }
+        .section-title {
+            margin: 0 0 8px;
+            font-size: 13px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+        #mode-joystick {
+            display: grid;
+            gap: 10px;
+            min-height: 420px;
+        }
+        .joysticks {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            min-height: 250px;
+        }
+        .zone {
+            border: 1px dashed #3a455c;
+            border-radius: 12px;
+            position: relative;
+            background: linear-gradient(180deg, rgba(43, 56, 79, 0.16), rgba(30, 38, 53, 0.06));
+            min-height: 220px;
+            touch-action: none;
+        }
+        .zone-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            color: var(--muted);
+            font-size: 11px;
+            text-align: center;
+            pointer-events: none;
+        }
+        .aux {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .aux-block {
+            background: var(--card-2);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 8px;
+            display: grid;
+            gap: 8px;
+        }
+        .aux-block h4 {
+            margin: 0;
+            font-size: 12px;
+            color: var(--muted);
+            text-align: center;
+        }
+        .btn-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .btn {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #242d3f;
+            color: var(--text);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 12px 10px;
+            cursor: pointer;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        .btn:active {
+            transform: scale(0.98);
+            background: #2a3852;
+        }
+        #mode-camera {
+            display: none;
+            gap: 10px;
+        }
+        .video-wrap {
+            position: relative;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            overflow: hidden;
+            background: #090c12;
+            aspect-ratio: 4 / 3;
+        }
+        #webcam, #output_canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            transform: scaleX(-1);
+        }
+        .controls {
+            display: grid;
+            gap: 10px;
+        }
+        .control-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            align-items: center;
+        }
+        .control-row label {
+            font-size: 12px;
+            color: var(--muted);
+        }
+        .control-row output {
+            font-size: 12px;
+            font-weight: 700;
+            min-width: 40px;
+            text-align: right;
+            color: var(--text);
+        }
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--primary);
+        }
+        .telemetry {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .t {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 8px;
+            background: var(--card-2);
+            display: grid;
+            gap: 4px;
+        }
+        .t .k {
+            color: var(--muted);
+            font-size: 11px;
+        }
+        .t .v {
+            color: #d8f2ff;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 15px;
+            font-weight: 700;
+        }
+        .action-strip {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+        }
+        .action-btn {
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+        }
+        #mqttBtn { background: #3b4d72; }
+        #installBtn { background: #1d6bd8; }
+        #resetBtn { background: #b83939; }
+        .hint {
+            color: var(--muted);
+            font-size: 11px;
+            margin: 2px 0 0;
+        }
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 16px;
+            transform: translateX(-50%);
+            background: #0b1018;
+            border: 1px solid #2f3c54;
+            color: var(--text);
+            font-size: 12px;
+            padding: 10px 14px;
+            border-radius: 9px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 30;
+        }
+        .toast.show { opacity: 1; }
+        @media (max-width: 980px) {
+            .content { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 680px) {
+            .app { padding: 10px; gap: 10px; }
+            .topbar { padding: 10px; }
+            .title { font-size: 16px; }
+            .subtitle { font-size: 11px; }
+            .chips { display: none; }
+            .joysticks { grid-template-columns: 1fr; min-height: unset; }
+            .zone { min-height: 160px; }
+            .aux { grid-template-columns: 1fr; }
+            .telemetry { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .action-strip { grid-template-columns: 1fr; }
+        }
     </style>
-
-    <!-- MediaPipe -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.js" crossorigin="anonymous"></script>
-    
-    <!-- Paho MQTT client -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.js" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.js" crossorigin="anonymous"></script>
 </head>
 <body>
+    <main class="app">
+        <header class="topbar">
+            <div class="title-wrap">
+                <h1 class="title">ArmOps Remote Console</h1>
+                <p class="subtitle">Industrial teleoperation for 6-DOF arm via MQTT</p>
+            </div>
+            <div class="chips">
+                <span id="chip-conn" class="chip err">MQTT Offline</span>
+                <span id="chip-hz" class="chip">Rate 10 Hz</span>
+            </div>
+        </header>
 
-    <h2>🤖 Remote Vision & Gesture Control</h2>
-    
-    <div>
-        <button id="cameraBtn">Start Camera</button>
-        <button id="mqttBtn">Connect to Robot</button>
-    </div>
+        <div class="tab-bar">
+            <button class="tab-btn active" data-mode="joystick">Joystick Mode</button>
+            <button class="tab-btn" data-mode="camera">Camera Mode</button>
+        </div>
 
-    <div id="status">MQTT: Not connected | Camera: Off</div>
+        <section class="content">
+            <section class="card">
+                <div id="mode-joystick">
+                    <h3 class="section-title">Primary Control Surface</h3>
+                    <div class="joysticks">
+                        <div class="zone" id="zone_left"><div class="zone-label">J1 Base + J2 Shoulder</div></div>
+                        <div class="zone" id="zone_right"><div class="zone-label">J3 Elbow + J4 Wrist Pitch</div></div>
+                    </div>
+                    <div class="aux">
+                        <div class="aux-block">
+                            <h4>J5 Wrist Roll</h4>
+                            <div class="btn-row">
+                                <button class="btn" id="btn-roll-left">Roll -</button>
+                                <button class="btn" id="btn-roll-right">Roll +</button>
+                            </div>
+                        </div>
+                        <div class="aux-block">
+                            <h4>J6 Gripper</h4>
+                            <div class="btn-row">
+                                <button class="btn" id="btn-grip-open">Open</button>
+                                <button class="btn" id="btn-grip-close">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-    <div class="video-container" id="videoContainer">
-        <video id="webcam" autoplay playsinline></video>
-        <canvas id="output_canvas"></canvas>
-    </div>
+                <div id="mode-camera">
+                    <h3 class="section-title">Vision Tracking</h3>
+                    <button class="btn" id="cameraBtn">Start Camera</button>
+                    <div class="video-wrap">
+                        <video id="webcam" autoplay playsinline></video>
+                        <canvas id="output_canvas"></canvas>
+                    </div>
+                    <p class="hint">Use open palm in frame and avoid fast jumps for smoother tracking.</p>
+                </div>
+            </section>
 
-    <div class="data-panel" id="dataPanel">
-        J1: 0.00 | J2: 0.00 | J3: 0.00<br>
-        J4: 0.00 | J5: 0.00 | J6 (Grip): 0.00
-    </div>
+            <aside class="card controls">
+                <h3 class="section-title">Control Tuning</h3>
+                <div class="control-row">
+                    <label for="speedRange">Joystick Speed</label>
+                    <output id="speedOut">0.040</output>
+                </div>
+                <input type="range" id="speedRange" min="0.010" max="0.090" step="0.005" value="0.040">
+
+                <div class="control-row">
+                    <label for="deadRange">Joystick Deadzone</label>
+                    <output id="deadOut">0.08</output>
+                </div>
+                <input type="range" id="deadRange" min="0.02" max="0.24" step="0.01" value="0.08">
+
+                <div class="control-row">
+                    <label for="smoothRange">Camera Smoothing</label>
+                    <output id="smoothOut">0.15</output>
+                </div>
+                <input type="range" id="smoothRange" min="0.05" max="0.40" step="0.01" value="0.15">
+
+                <div class="control-row">
+                    <label for="rateRange">Publish Rate (Hz)</label>
+                    <output id="rateOut">10</output>
+                </div>
+                <input type="range" id="rateRange" min="5" max="20" step="1" value="10">
+
+                <h3 class="section-title">Live Telemetry</h3>
+                <div class="telemetry">
+                    <div class="t"><span class="k">J1 Base</span><span id="val-j1" class="v">0.0 deg</span></div>
+                    <div class="t"><span class="k">J2 Shoulder</span><span id="val-j2" class="v">0.0 deg</span></div>
+                    <div class="t"><span class="k">J3 Elbow</span><span id="val-j3" class="v">0.0 deg</span></div>
+                    <div class="t"><span class="k">J4 Wrist Pitch</span><span id="val-j4" class="v">0.0 deg</span></div>
+                    <div class="t"><span class="k">J5 Wrist Roll</span><span id="val-j5" class="v">0.0 deg</span></div>
+                    <div class="t"><span class="k">J6 Gripper</span><span id="val-j6" class="v">0.0 deg</span></div>
+                </div>
+                <p class="hint">If movement feels aggressive, lower speed and raise deadzone slightly.</p>
+            </aside>
+        </section>
+
+        <footer class="action-strip">
+            <button class="action-btn" id="mqttBtn">Connect MQTT</button>
+            <button class="action-btn" id="installBtn">Install App</button>
+            <button class="action-btn" id="resetBtn">Reset Pose</button>
+        </footer>
+    </main>
+    <div class="toast" id="toast"></div>
 
     <script type="module">
         import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3";
 
-        let handLandmarker = undefined;
-        let runningMode = "VIDEO";
-        let webcamRunning = false;
-        
-        const video = document.getElementById("webcam");
-        const canvasElement = document.getElementById("output_canvas");
-        const canvasCtx = canvasElement.getContext("2d");
-        const statusDiv = document.getElementById("status");
-        const dataPanel = document.getElementById("dataPanel");
-        const cameraBtn = document.getElementById("cameraBtn");
-        const mqttBtn = document.getElementById("mqttBtn");
-
-        // MQTT Setup (WebSockets for browser clients)
+        const J_RANGES = [
+            [-1.57, 1.57],
+            [-1.00, 1.00],
+            [-1.00, 1.00],
+            [-1.57, 1.57],
+            [-1.57, 1.57],
+            [-0.50, 0.50]
+        ];
         const MQTT_TOPIC = "natraj/robot_arm/teleop/target_state";
-        const isHttps = window.location.protocol === "https:";
-        const DEFAULT_ENDPOINTS = [
-            { host: "broker.hivemq.com", port: 8884, path: "/mqtt", useSSL: true, label: "HiveMQ WSS" },
-            { host: "broker.hivemq.com", port: 8000, path: "/mqtt", useSSL: false, label: "HiveMQ WS" }
+
+        const tabButtons = [...document.querySelectorAll(".tab-btn")];
+        const modeJoystick = document.getElementById("mode-joystick");
+        const modeCamera = document.getElementById("mode-camera");
+        const mqttBtn = document.getElementById("mqttBtn");
+        const installBtn = document.getElementById("installBtn");
+        const resetBtn = document.getElementById("resetBtn");
+        const chipConn = document.getElementById("chip-conn");
+        const chipHz = document.getElementById("chip-hz");
+        const cameraBtn = document.getElementById("cameraBtn");
+        const toast = document.getElementById("toast");
+        const dashVals = [
+            document.getElementById("val-j1"),
+            document.getElementById("val-j2"),
+            document.getElementById("val-j3"),
+            document.getElementById("val-j4"),
+            document.getElementById("val-j5"),
+            document.getElementById("val-j6")
         ];
 
-        // Browser security blocks ws:// on https pages, so keep only TLS endpoint there.
-        const MQTT_ENDPOINTS = isHttps
-            ? DEFAULT_ENDPOINTS.filter((e) => e.useSSL)
-            : DEFAULT_ENDPOINTS;
+        const speedRange = document.getElementById("speedRange");
+        const speedOut = document.getElementById("speedOut");
+        const deadRange = document.getElementById("deadRange");
+        const deadOut = document.getElementById("deadOut");
+        const smoothRange = document.getElementById("smoothRange");
+        const smoothOut = document.getElementById("smoothOut");
+        const rateRange = document.getElementById("rateRange");
+        const rateOut = document.getElementById("rateOut");
+
+        const video = document.getElementById("webcam");
+        const canvas = document.getElementById("output_canvas");
+        const ctx = canvas.getContext("2d");
+
+        let activeMode = "joystick";
+        let target = [0, 0, 0, 0, 0];
+        let current = [0, 0, 0, 0, 0];
+        let targetGrip = 0;
+        let currentGrip = 0;
+        let vel = [0, 0, 0, 0, 0];
+        let velGrip = 0;
+        let joystickSpeed = parseFloat(speedRange.value);
+        let deadzone = parseFloat(deadRange.value);
+        let cameraSmoothing = parseFloat(smoothRange.value);
+        let publishHz = parseInt(rateRange.value, 10);
 
         let mqttClient = null;
         let mqttConnected = false;
-        let endpointIndex = 0;
+        let sendTimer = null;
 
-        // Joint Range configs (Matches GestureNode)
-        const J1_RANGE = [-1.57, 1.57];
-        const J2_RANGE = [-1.0, 1.0];
-        const J3_RANGE = [-1.0, 1.0];
-        const J4_RANGE = [-1.57, 1.57];
-        const J6_RANGE = [-1.0, 1.0];
+        let handLandmarker = null;
+        let webcamRunning = false;
+        let lastVideoTime = -1;
+        let deferredInstallPrompt = null;
 
-        // Smoothing variables locally on web so we send smooth paths
-        let current_angles = [0.0, 0.0, 0.0, 0.0, 0.0];
-        let current_gripper = 0.0;
-        const alpha = 0.15; // smoothing
+        const isHttps = window.location.protocol === "https:";
+        const toDeg = (r) => (r * 180 / Math.PI);
+        const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+        const mapRange = (val, inMin, inMax, outMin, outMax) => (val - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
 
-        // Utility: map_range and clamp
-        const map_range = (val, in_min, in_max, out_min, out_max) => (val - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-        const clamp = (val, min_v, max_v) => Math.max(min_v, Math.min(val, max_v));
-
-        // Connect to MQTT
-        function createMqttClient(endpoint) {
-            const clientId = "web_controller_" + Math.random().toString(16).slice(2, 10);
-            const client = new Paho.MQTT.Client(endpoint.host, endpoint.port, endpoint.path, clientId);
-
-            client.onConnectionLost = (responseObject) => {
-                if (responseObject.errorCode !== 0) {
-                    statusDiv.innerHTML = "MQTT: Connection Lost: " + responseObject.errorMessage;
-                }
-                mqttConnected = false;
-                mqttBtn.innerText = "Connect to Robot";
-                mqttBtn.style.backgroundColor = "#0078d7";
-            };
-
-            return client;
+        function notify(message) {
+            toast.textContent = message;
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 1800);
         }
 
-        function connectWithEndpoint(endpoint) {
-            mqttClient = createMqttClient(endpoint);
-            statusDiv.innerHTML = `Connecting to ${endpoint.label} (${endpoint.host}:${endpoint.port})...`;
+        function haptic(ms = 12) {
+            if (navigator.vibrate) navigator.vibrate(ms);
+        }
+
+        function applyMode(mode) {
+            activeMode = mode;
+            modeJoystick.style.display = mode === "joystick" ? "grid" : "none";
+            modeCamera.style.display = mode === "camera" ? "grid" : "none";
+            tabButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.mode === mode));
+        }
+
+        tabButtons.forEach((btn) => {
+            btn.addEventListener("click", () => {
+                applyMode(btn.dataset.mode);
+            });
+        });
+
+        speedRange.addEventListener("input", () => {
+            joystickSpeed = parseFloat(speedRange.value);
+            speedOut.value = joystickSpeed.toFixed(3);
+        });
+        deadRange.addEventListener("input", () => {
+            deadzone = parseFloat(deadRange.value);
+            deadOut.value = deadzone.toFixed(2);
+        });
+        smoothRange.addEventListener("input", () => {
+            cameraSmoothing = parseFloat(smoothRange.value);
+            smoothOut.value = cameraSmoothing.toFixed(2);
+        });
+        rateRange.addEventListener("input", () => {
+            publishHz = parseInt(rateRange.value, 10);
+            rateOut.value = String(publishHz);
+            chipHz.textContent = `Rate ${publishHz} Hz`;
+            startSendLoop();
+        });
+
+        function updateTelemetry() {
+            for (let i = 0; i < 5; i++) {
+                dashVals[i].textContent = `${toDeg(current[i]).toFixed(1)} deg`;
+            }
+            dashVals[5].textContent = `${toDeg(currentGrip).toFixed(1)} deg`;
+        }
+
+        function updateConnectionChip() {
+            chipConn.textContent = mqttConnected ? "MQTT Online" : "MQTT Offline";
+            chipConn.classList.toggle("ok", mqttConnected);
+            chipConn.classList.toggle("err", !mqttConnected);
+            mqttBtn.textContent = mqttConnected ? "Disconnect MQTT" : "Connect MQTT";
+        }
+
+        function createJoystick(zoneId, color, onMove, onEnd) {
+            const manager = nipplejs.create({
+                zone: document.getElementById(zoneId),
+                mode: "static",
+                position: { left: "50%", top: "50%" },
+                color
+            });
+
+            manager.on("move", (_, data) => {
+                const dist = clamp((data.distance || 0) / 48, 0, 1);
+                if (dist < deadzone || !data.vector) {
+                    onEnd();
+                    return;
+                }
+                onMove(data.vector.x * dist, data.vector.y * dist);
+            });
+            manager.on("end", onEnd);
+        }
+
+        createJoystick("zone_left", "#f89f1b", (x, y) => {
+            vel[0] = x;
+            vel[1] = y;
+        }, () => {
+            vel[0] = 0;
+            vel[1] = 0;
+        });
+
+        createJoystick("zone_right", "#00a3ff", (x, y) => {
+            vel[3] = x;
+            vel[2] = y;
+        }, () => {
+            vel[2] = 0;
+            vel[3] = 0;
+        });
+
+        function holdButton(id, down, up) {
+            const b = document.getElementById(id);
+            b.addEventListener("mousedown", down);
+            b.addEventListener("touchstart", (e) => { e.preventDefault(); down(); }, { passive: false });
+            b.addEventListener("mouseup", up);
+            b.addEventListener("mouseleave", up);
+            b.addEventListener("touchend", up, { passive: true });
+            b.addEventListener("touchcancel", up, { passive: true });
+        }
+
+        holdButton("btn-roll-left", () => { vel[4] = -1; haptic(); }, () => { vel[4] = 0; });
+        holdButton("btn-roll-right", () => { vel[4] = 1; haptic(); }, () => { vel[4] = 0; });
+        holdButton("btn-grip-open", () => { velGrip = -1; haptic(); }, () => { velGrip = 0; });
+        holdButton("btn-grip-close", () => { velGrip = 1; haptic(); }, () => { velGrip = 0; });
+
+        resetBtn.addEventListener("click", () => {
+            target = [0, 0, 0, 0, 0];
+            current = [0, 0, 0, 0, 0];
+            targetGrip = 0;
+            currentGrip = 0;
+            vel = [0, 0, 0, 0, 0];
+            velGrip = 0;
+            updateTelemetry();
+            notify("Reset pose commanded");
+        });
+
+        function connectMqtt() {
+            const host = "broker.hivemq.com";
+            const port = isHttps ? 8884 : 8000;
+            const clientId = `armops_${Math.random().toString(16).slice(2, 10)}`;
+            mqttClient = new Paho.MQTT.Client(host, port, "/mqtt", clientId);
+
+            mqttClient.onConnectionLost = () => {
+                mqttConnected = false;
+                updateConnectionChip();
+                notify("MQTT disconnected");
+            };
 
             mqttClient.connect({
-                useSSL: endpoint.useSSL,
-                timeout: 10,
-                keepAliveInterval: 30,
-                cleanSession: true,
+                useSSL: isHttps,
+                timeout: 8,
+                keepAliveInterval: 20,
                 reconnect: true,
                 mqttVersion: 4,
                 onSuccess: () => {
                     mqttConnected = true;
-                    statusDiv.innerHTML = `MQTT: Connected to ${endpoint.host}:${endpoint.port}`;
-                    mqttBtn.innerText = "Connected";
-                    mqttBtn.style.backgroundColor = "green";
+                    updateConnectionChip();
+                    notify("MQTT linked");
                 },
-                onFailure: (err) => {
-                    const reason = err?.errorMessage || JSON.stringify(err);
-                    console.error("MQTT Connect Error:", err);
-
-                    // Try alternate endpoint only on non-https pages.
-                    if (!isHttps && endpointIndex + 1 < MQTT_ENDPOINTS.length) {
-                        endpointIndex += 1;
-                        connectWithEndpoint(MQTT_ENDPOINTS[endpointIndex]);
-                        return;
-                    }
-
-                    statusDiv.innerHTML = `MQTT: Connection failed (${endpoint.host}:${endpoint.port}) - ${reason}`;
+                onFailure: () => {
                     mqttConnected = false;
+                    updateConnectionChip();
+                    notify("MQTT connect failed");
                 }
             });
         }
 
+        function disconnectMqtt() {
+            if (mqttClient && mqttConnected) {
+                mqttClient.disconnect();
+            }
+            mqttConnected = false;
+            updateConnectionChip();
+        }
+
         mqttBtn.addEventListener("click", () => {
             if (mqttConnected) {
-                statusDiv.innerHTML = "MQTT: Already connected";
-                return;
+                disconnectMqtt();
+            } else {
+                connectMqtt();
             }
-
-            endpointIndex = 0;
-            connectWithEndpoint(MQTT_ENDPOINTS[endpointIndex]);
         });
 
-        // Initialize MediaPipe
-        async function initializePipeline() {
+        function publishState() {
+            if (!mqttConnected || !mqttClient) return;
+            const payload = {
+                arm_angles: current.map((x) => Math.round(x * 1000) / 1000),
+                gripper_angle: Math.round(currentGrip * 1000) / 1000,
+                client_ts: Date.now()
+            };
+            const msg = new Paho.MQTT.Message(JSON.stringify(payload));
+            msg.destinationName = MQTT_TOPIC;
+            msg.qos = 0;
+            mqttClient.send(msg);
+        }
+
+        function tickControl() {
+            if (activeMode === "joystick") {
+                for (let i = 0; i < 5; i++) {
+                    target[i] = clamp(target[i] + vel[i] * joystickSpeed, J_RANGES[i][0], J_RANGES[i][1]);
+                    current[i] = target[i];
+                }
+                targetGrip = clamp(targetGrip + velGrip * joystickSpeed, J_RANGES[5][0], J_RANGES[5][1]);
+                currentGrip = targetGrip;
+            } else {
+                for (let i = 0; i < 5; i++) {
+                    current[i] = cameraSmoothing * target[i] + (1 - cameraSmoothing) * current[i];
+                }
+                currentGrip = cameraSmoothing * targetGrip + (1 - cameraSmoothing) * currentGrip;
+            }
+            updateTelemetry();
+            publishState();
+        }
+
+        function startSendLoop() {
+            if (sendTimer) clearInterval(sendTimer);
+            sendTimer = setInterval(tickControl, Math.max(40, Math.floor(1000 / publishHz)));
+        }
+
+        async function initCamera() {
             const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
             handLandmarker = await HandLandmarker.createFromOptions(vision, {
                 baseOptions: {
                     modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
                     delegate: "GPU"
                 },
-                runningMode: runningMode,
+                runningMode: "VIDEO",
                 numHands: 1
             });
         }
-        initializePipeline();
 
-        // Start Webcam
-        function enableCam() {
-            if (!handLandmarker) return;
+        cameraBtn.addEventListener("click", async () => {
+            if (!handLandmarker) {
+                notify("Loading hand tracker...");
+                try {
+                    await initCamera();
+                } catch {
+                    notify("Camera model init failed");
+                    return;
+                }
+            }
+
             if (webcamRunning) {
                 webcamRunning = false;
-                cameraBtn.innerText = "Start Camera";
-                video.srcObject.getTracks().forEach(track => track.stop());
+                if (video.srcObject) video.srcObject.getTracks().forEach((t) => t.stop());
+                cameraBtn.textContent = "Start Camera";
                 return;
             }
 
-            navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
                 video.srcObject = stream;
-                video.addEventListener("loadeddata", predictWebcam);
                 webcamRunning = true;
-                cameraBtn.innerText = "Stop Camera";
-            });
-        }
-        cameraBtn.addEventListener("click", enableCam);
+                cameraBtn.textContent = "Stop Camera";
+                video.addEventListener("loadeddata", predictWebcam, { once: true });
+            } catch {
+                notify("Camera permission denied");
+            }
+        });
 
-        let lastVideoTime = -1;
+        function predictWebcam() {
+            if (!webcamRunning) return;
 
-        async function predictWebcam() {
-            canvasElement.width = video.videoWidth;
-            canvasElement.height = video.videoHeight;
-            let target_angles = [...current_angles];
-            let target_gripper = current_gripper;
-
-            let startTimeMs = performance.now();
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const now = performance.now();
             if (lastVideoTime !== video.currentTime) {
                 lastVideoTime = video.currentTime;
-                const results = handLandmarker.detectForVideo(video, startTimeMs);
+                const results = handLandmarker.detectForVideo(video, now);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                canvasCtx.save();
-                canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+                if (results.landmarks && results.landmarks.length > 0 && activeMode === "camera") {
+                    const lm = results.landmarks[0];
+                    const wrist = lm[0];
+                    const thumb = lm[4];
+                    const idxMcp = lm[5];
+                    const idxTip = lm[8];
 
-                if (results.landmarks && results.landmarks.length > 0) {
-                    const landmarks = results.landmarks[0];
-                    const wrist = landmarks[0];
-                    const thumb_tip = landmarks[4];
-                    const index_mcp = landmarks[5];
-                    const index_tip = landmarks[8];
-
-                    // Draw dots for feedback
-                    for (let mark of landmarks) {
-                        canvasCtx.beginPath();
-                        canvasCtx.arc(mark.x * canvasElement.width, mark.y * canvasElement.height, 5, 0, 2 * Math.PI);
-                        canvasCtx.fillStyle = "#00FF00";
-                        canvasCtx.fill();
+                    for (const p of lm) {
+                        ctx.beginPath();
+                        ctx.arc(p.x * canvas.width, p.y * canvas.height, 3.5, 0, 2 * Math.PI);
+                        ctx.fillStyle = "#30d17b";
+                        ctx.fill();
                     }
 
-                    // 1. Base Joint (flip X for mirror)
-                    const inv_x = 1.0 - wrist.x; 
-                    let base_angle = map_range(inv_x, 0.2, 0.8, J1_RANGE[1], J1_RANGE[0]);
-                    target_angles[0] = clamp(base_angle, J1_RANGE[0], J1_RANGE[1]);
+                    const invX = 1 - wrist.x;
+                    target[0] = clamp(mapRange(invX, 0.2, 0.8, J_RANGES[0][1], J_RANGES[0][0]), J_RANGES[0][0], J_RANGES[0][1]);
+                    const shoulder = clamp(mapRange(wrist.y, 0.2, 0.8, J_RANGES[1][1], J_RANGES[1][0]), J_RANGES[1][0], J_RANGES[1][1]);
+                    target[1] = shoulder;
+                    target[2] = clamp(-shoulder * 0.5, J_RANGES[2][0], J_RANGES[2][1]);
+                    target[3] = clamp(mapRange((wrist.y - idxMcp.y), 0.05, 0.3, J_RANGES[3][0], J_RANGES[3][1]), J_RANGES[3][0], J_RANGES[3][1]);
+                    target[4] = 0;
 
-                    // 2. Shoulder & Elbow
-                    let shoulder_angle = map_range(wrist.y, 0.2, 0.8, J2_RANGE[1], J2_RANGE[0]);
-                    target_angles[1] = clamp(shoulder_angle, J2_RANGE[0], J2_RANGE[1]);
-                    target_angles[2] = clamp(-shoulder_angle * 0.5, J3_RANGE[0], J3_RANGE[1]);
-
-                    // 3. Wrist flex
-                    let hand_tilt_y = wrist.y - index_mcp.y;
-                    let wrist_flex = map_range(hand_tilt_y, 0.05, 0.3, J4_RANGE[0], J4_RANGE[1]);
-                    target_angles[3] = clamp(wrist_flex, J4_RANGE[0], J4_RANGE[1]);
-                    
-                    target_angles[4] = 0.0;
-
-                    // 4. Gripper
-                    let dx = thumb_tip.x - index_tip.x;
-                    let dy = thumb_tip.y - index_tip.y;
-                    let dist = Math.sqrt(dx*dx + dy*dy);
-                    let gripper_val = map_range(dist, 0.03, 0.12, 0.0, J6_RANGE[1]);
-                    target_gripper = clamp(gripper_val, J6_RANGE[0], J6_RANGE[1]);
+                    const dx = thumb.x - idxTip.x;
+                    const dy = thumb.y - idxTip.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    targetGrip = clamp(mapRange(dist, 0.03, 0.12, 0.0, J_RANGES[5][1]), J_RANGES[5][0], J_RANGES[5][1]);
                 }
-                
-                // Exponential Smoothing
-                for(let i=0; i<5; i++){
-                    current_angles[i] = (alpha * target_angles[i]) + ((1 - alpha) * current_angles[i]);
-                }
-                current_gripper = (alpha * target_gripper) + ((1 - alpha) * current_gripper);
-
-                // Update UI Display
-                dataPanel.innerHTML = `J1: ${current_angles[0].toFixed(2)} | J2: ${current_angles[1].toFixed(2)} | J3: ${current_angles[2].toFixed(2)}<br>J4: ${current_angles[3].toFixed(2)} | J5: ${current_angles[4].toFixed(2)} | Grip: ${current_gripper.toFixed(2)}`;
-
-                // Publish to MQTT
-                if (mqttConnected && results.landmarks && results.landmarks.length > 0) {
-                    let payload = {
-                        arm_angles: current_angles,
-                        gripper_angle: current_gripper
-                    };
-                    let message = new Paho.MQTT.Message(JSON.stringify(payload));
-                    message.destinationName = MQTT_TOPIC;
-                    message.qos = 0; // Fire and forget for speed
-                    mqttClient.send(message);
-                }
-
-                canvasCtx.restore();
             }
-
-            if (webcamRunning === true) {
-                window.requestAnimationFrame(predictWebcam);
-            }
+            requestAnimationFrame(predictWebcam);
         }
+
+        window.addEventListener("beforeinstallprompt", (e) => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            installBtn.disabled = false;
+            installBtn.textContent = "Install App";
+        });
+
+        installBtn.addEventListener("click", async () => {
+            if (!deferredInstallPrompt) {
+                notify("Install option appears after first load on supported browsers");
+                return;
+            }
+            deferredInstallPrompt.prompt();
+            const choice = await deferredInstallPrompt.userChoice;
+            if (choice.outcome === "accepted") {
+                notify("App installed");
+            }
+            deferredInstallPrompt = null;
+        });
+
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+        }
+
+        updateConnectionChip();
+        updateTelemetry();
+        applyMode("joystick");
+        startSendLoop();
     </script>
 </body>
 </html>
