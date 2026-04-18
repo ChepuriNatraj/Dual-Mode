@@ -1,0 +1,66 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build static site bundle
+        run: |
+          set -e
+          mkdir -p _site
+          mkdir -p _site/remote
+          mkdir -p _site/docs
+
+          # Remote controller as homepage
+          cp src/robot_arm_remote/web/index.html _site/index.html
+          cp src/robot_arm_remote/web/manifest.webmanifest _site/manifest.webmanifest
+          cp src/robot_arm_remote/web/service-worker.js _site/service-worker.js
+          cp src/robot_arm_remote/web/icon.svg _site/icon.svg
+          cp src/robot_arm_remote/web/icon-maskable.svg _site/icon-maskable.svg
+
+          # Also publish controller under /remote/ path
+          cp src/robot_arm_remote/web/index.html _site/remote/index.html
+          cp src/robot_arm_remote/web/manifest.webmanifest _site/remote/manifest.webmanifest
+          cp src/robot_arm_remote/web/service-worker.js _site/remote/service-worker.js
+          cp src/robot_arm_remote/web/icon.svg _site/remote/icon.svg
+          cp src/robot_arm_remote/web/icon-maskable.svg _site/remote/icon-maskable.svg
+
+          # Separate visual page in both root + docs path for compatibility
+          cp docs/system_visual.html _site/system-visual.html
+          cp docs/system_visual.html _site/docs/system_visual.html
+
+          # Keep GitHub Pages from running Jekyll processing
+          touch _site/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

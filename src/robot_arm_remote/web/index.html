@@ -73,6 +73,18 @@
             gap: 8px;
             align-items: center;
         }
+        .link-chip {
+            border: 1px solid rgba(0, 163, 255, 0.45);
+            color: #b7dbff;
+            text-decoration: none;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 12px;
+            background: rgba(0, 163, 255, 0.10);
+        }
+        .link-chip:hover {
+            background: rgba(0, 163, 255, 0.18);
+        }
         .chip {
             border: 1px solid var(--line);
             background: var(--card);
@@ -335,6 +347,7 @@
             <div class="chips">
                 <span id="chip-conn" class="chip err">MQTT Offline</span>
                 <span id="chip-hz" class="chip">Rate 10 Hz</span>
+                <a class="link-chip" href="./system-visual.html">System Visual</a>
             </div>
         </header>
 
