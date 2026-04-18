@@ -134,8 +134,10 @@ class GestureControlNode(Node):
 
             # 5. Gripper (link_6)
             dist = math.hypot(thumb_tip.x - index_tip.x, thumb_tip.y - index_tip.y)
-            gripper_val = self.map_range(dist, 0.03, 0.12, 0.0, self.link_6_range[1])
-            target_gripper_angle = self.clamp(gripper_val, self.link_6_range[0], self.link_6_range[1])
+            # Adjusted mapping for pinch distance: 
+            # 0.05 (closed pinch) maps to 0.0 rad, 0.15 (fully open) maps to self.link_6_range[1]
+            gripper_val = self.map_range(dist, 0.05, 0.15, 0.0, self.link_6_range[1])
+            target_gripper_angle = self.clamp(gripper_val, 0.0, self.link_6_range[1])
 
             # Visuals
             annotated_image = np.copy(rgb_frame)

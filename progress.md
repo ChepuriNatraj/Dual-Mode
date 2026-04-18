@@ -34,9 +34,9 @@
 
 ## Immediate Next Steps (Phase 8 & 9)
 * [ ] Create `robot_arm_remote` ROS 2 package.
-* [ ] Set up HiveMQ Cloud MQTT broker & UI (`index.html`) using MediaPipe.js.
-* [ ] Develop `mqtt_bridge_node.py` to bridge internet telemetry to ROS 2.
-* [ ] Create `robot_arm_mode_manager` for orchestrating state hierarchies (Autonomous vs Local Gesture vs Remote).
+* [x] Set up HiveMQ Cloud MQTT broker & UI (`index.html`) using MediaPipe.js.
+* [x] Develop `mqtt_bridge_node.py` to bridge internet telemetry to ROS 2.
+* [x] Create `robot_arm_mode_manager` for orchestrating state hierarchies (Autonomous vs Local Gesture vs Remote).
 
 ### Update: April 14, 2026
 * [x] **Phase 7 (Local Gesture Control)**: Fixed a MediaPipe API breaking change (`mediapipe.tasks.python.BaseOptions` -> `mediapipe.tasks.BaseOptions`) in `gesture_node.py` and successfully tested real-time teleoperation mapped to Gazebo/RViz2.

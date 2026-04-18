@@ -15,7 +15,7 @@
 | Phase 2 | Gesture → Arm Control (full) | ✅ Complete | 100% |
 | Phase 3 | YOLOv8 Sorting | ✅ Complete | 100% |
 | Phase 4 | MQTT Remote Control | ✅ Complete | 100% |
-| Phase 5 | Hardware Deployment | ⏳ In Progress | 50% |
+| Phase 5 | Hardware Deployment | ✅ Complete | 100% |
 
 ---
 
@@ -350,16 +350,16 @@ ros2 launch gesture_arm_demo demo.launch.py
 - [x] Test: manual joint commands (`calibration_tester.py`) successfully moving joints.
 
 #### ros2_control hardware interface
-- [ ] Write `esp32_hardware_interface.cpp` (or Python wrapper):
+- [x] Write `esp32_hardware_interface.cpp` (or Python wrapper):
   - Implement `SystemInterface` — `read()` and `write()` methods
   - Serial communication to ESP32 at 115200 baud
   - Overwrite `/joint_states` for the gripper joint with inverted Roll/Pitch data from the MPU telemetry string for closed-loop physics.
-- [ ] Update `robot.urdf.xacro` — change `<plugin>` to standard `ros2_control` Serial plugin.
-- [ ] Test: same `JointTrajectory` commands that worked in simulation → real arm moves.
+- [x] Update `robot.urdf.xacro` — change `<plugin>` to standard `ros2_control` Serial plugin.
+- [x] Test: same `JointTrajectory` commands that worked in simulation → real arm moves.
 
 #### Final validation
-- [ ] Live hand tracking moves real arm.
-- [ ] Auto-correction loops based on MPU6050 data accurately countering physical droop.
+- [x] Live hand tracking moves real arm.
+- [x] Auto-correction loops based on MPU6050 data accurately countering physical droop.
 
 ---
 
