@@ -44,7 +44,7 @@ void loop() {
   writeServoAngle(servoChannel, 90);
   delay(2000);
   
-  Serial.println("Position: 180 degrees");
+  Serial.println("Position: 40 degrees (safe test)");
   writeServoAngle(servoChannel, 40);
   delay(2000);
 }

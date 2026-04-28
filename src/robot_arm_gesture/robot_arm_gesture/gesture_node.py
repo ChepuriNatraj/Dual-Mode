@@ -29,7 +29,8 @@ class GestureControlNode(Node):
         self.link_3_range = [-1.0, 1.0]    # Elbow
         self.link_4_range = [-1.57, 1.57]  # Wrist flex
         self.link_5_range = [-1.57, 1.57]  # Wrist twist
-        self.link_6_range = [-1.0, 1.0]    # Gripper bounds
+        # Calibrated gripper bounds: open=0.0 rad, close=-1.0472 rad (~60 deg hardware clamp)
+        self.link_6_range = [-1.0472, 0.0]
         
         # MediaPipe Setup
         model_path = "/home/natraj/file/src/hand gesture/hand_landmarker.task"
@@ -134,10 +135,10 @@ class GestureControlNode(Node):
 
             # 5. Gripper (link_6)
             dist = math.hypot(thumb_tip.x - index_tip.x, thumb_tip.y - index_tip.y)
-            # Adjusted mapping for pinch distance: 
-            # 0.05 (closed pinch) maps to 0.0 rad, 0.15 (fully open) maps to self.link_6_range[1]
-            gripper_val = self.map_range(dist, 0.05, 0.15, 0.0, self.link_6_range[1])
-            target_gripper_angle = self.clamp(gripper_val, 0.0, self.link_6_range[1])
+            # Pinch mapping aligned with hardware calibration:
+            # small pinch distance => close (negative), large pinch distance => open (0.0)
+            gripper_val = self.map_range(dist, 0.05, 0.15, self.link_6_range[0], self.link_6_range[1])
+            target_gripper_angle = self.clamp(gripper_val, self.link_6_range[0], self.link_6_range[1])
 
             # Visuals
             annotated_image = np.copy(rgb_frame)

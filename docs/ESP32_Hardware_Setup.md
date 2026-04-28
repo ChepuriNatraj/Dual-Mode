@@ -3,22 +3,29 @@
 To save local storage space, the ESP32 board manager packages, toolchains, and libraries have been explicitly configured to install and run from an external USB drive (Pendrive).
 
 ## Pendrive Configuration Path
-**Mount Point:** `/media/natraj/UBUNTU 24_0/arduino_esp32_env`
+**Current Mount Point:** `/media/natraj/ARDUINO_USB/arduino_esp32_env`
 
 All `arduino-cli` dependencies limit themselves strictly to this directory.
+
+If the USB volume label changes, detect the active mount first:
+
+```bash
+ls -la /media/natraj
+find /media/natraj -maxdepth 3 -type d -iname '*arduino*'
+```
 
 ## 1. Environment Variable Setup
 Before interacting with the ESP32 (compiling, installing libraries, or uploading), you **MUST** export the custom Arduino data directory to your current terminal session. If you don't do this, Arduino CLI will default to your laptop's internal hard drive (`~/.arduino15`).
 
 ```bash
-export ARDUINO_DATA_DIR="/media/natraj/UBUNTU 24_0/arduino_esp32_env/data"
+export ARDUINO_DATA_DIR="/media/natraj/ARDUINO_USB/arduino_esp32_env/data"
 ```
 
 ## 2. Installing Dependencies (One-Time Setup)
 If you need to reproduce this setup on another drive:
 
 ```bash
-export ARDUINO_DATA_DIR="/media/natraj/UBUNTU 24_0/arduino_esp32_env/data"
+export ARDUINO_DATA_DIR="/media/natraj/ARDUINO_USB/arduino_esp32_env/data"
 mkdir -p "$ARDUINO_DATA_DIR"
 
 # Initialize config
@@ -36,7 +43,7 @@ arduino-cli core install esp32:esp32 --config-file "$ARDUINO_DATA_DIR/arduino-cl
 Compile the ROS 2 hardware interface wrapper (or your custom PCA9685 servo test scripts):
 
 ```bash
-export ARDUINO_DATA_DIR="/media/natraj/UBUNTU 24_0/arduino_esp32_env/data"
+export ARDUINO_DATA_DIR="/media/natraj/ARDUINO_USB/arduino_esp32_env/data"
 
 arduino-cli compile --fqbn esp32:esp32:esp32 /home/natraj/file/src/robot_arm_hardware/firmware/arm_firmware --config-file "$ARDUINO_DATA_DIR/arduino-cli.yaml"
 ```
@@ -45,7 +52,7 @@ arduino-cli compile --fqbn esp32:esp32:esp32 /home/natraj/file/src/robot_arm_har
 Ensure the ESP32 is plugged securely via USB (typically mounts to `/dev/ttyUSB0` or `/dev/ttyACM0`).
 
 ```bash
-export ARDUINO_DATA_DIR="/media/natraj/UBUNTU 24_0/arduino_esp32_env/data"
+export ARDUINO_DATA_DIR="/media/natraj/ARDUINO_USB/arduino_esp32_env/data"
 
 arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32 /home/natraj/file/src/robot_arm_hardware/firmware/arm_firmware --config-file "$ARDUINO_DATA_DIR/arduino-cli.yaml"
 ```

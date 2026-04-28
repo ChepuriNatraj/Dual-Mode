@@ -1,0 +1,23 @@
+
+Do the following:
+
+1. Add validation/addendum notes where relevant.
+   - Clarify ESP32 + PCA9685 stack.
+   - Keep camera wording generic where required.
+   - Clarify browser/mobile remote teleoperation deployment and usability.
+
+2. Rewrite inconsistent inserted text.
+   - Replace Arduino-based inserted correction wording with ESP32-consistent wording.
+   - Ensure actuation-tier wording points to ESP32 as controller.
+
+3. Add a results subsection for deployment/features.
+   - Add subsection title:
+     5.4.1 GitHub Deployment and Web Controller Feature Validation
+   - Add result narrative covering:
+     - browser-delivered deployment practicality
+     - validated web console capabilities
+     - MQTT visibility/controls and usability
+     - practical operator-console conclusion
+   - Add figure placeholder:
+     Figure 5.5A : GitHub-Hosted Web Controller Interface and Feature Map
+This instruction sheet is written for delegation. Execute in order, then run a final content verification pass on both files.

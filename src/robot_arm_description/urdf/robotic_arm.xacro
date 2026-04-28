@@ -314,7 +314,7 @@
   <parent link="link_5_1"/>
   <child link="Gripper_Link_Gear#1_v1_1"/>
   <axis xyz="-0.0 0.0 1.0"/>
-  <limit lower="-1.0" upper="1.0" effort="10.0" velocity="0.5"/>
+  <limit lower="-1.0472" upper="0.0" effort="10.0" velocity="0.5"/>
 </joint>
 
 <joint name="link_10" type="continuous">

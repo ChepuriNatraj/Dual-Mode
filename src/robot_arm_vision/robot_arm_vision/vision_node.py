@@ -5,6 +5,7 @@ from geometry_msgs.msg import PoseStamped
 from cv_bridge import CvBridge
 import cv2
 import numpy as np
+import time
 
 try:
     from ultralytics import YOLO
@@ -39,7 +40,13 @@ class VisionNode(Node):
         self.cx = None
         self.cy = None
         self.camera_height = 0.8  # As defined in camera.xacro (z=0.8m)
-        self.workspace_z = 0.025  # Height of the objects (approx 5cm / 2)
+        # Half object height in meters. For 4cm cubes use 0.02, for 5cm use 0.025.
+        self.workspace_z = 0.02
+        self.min_world_x = 0.15
+        self.max_world_x = 0.45
+        self.min_world_y = -0.25
+        self.max_world_y = 0.25
+        self.last_log_time = 0.0
         
         # YOLO setup
         self.yolo_model = None
@@ -99,7 +106,18 @@ class VisionNode(Node):
         msg.pose.orientation.w = 0.0
         
         self.pose_pub.publish(msg)
-        self.get_logger().info(f'Published target: X={world_coords[0]:.3f}, Y={world_coords[1]:.3f}')
+        now = time.time()
+        if now - self.last_log_time > 0.5:
+            self.get_logger().info(f'Published target: X={world_coords[0]:.3f}, Y={world_coords[1]:.3f}')
+            self.last_log_time = now
+
+    def is_within_workspace(self, world_xyz):
+        if world_xyz is None:
+            return False
+        return (
+            self.min_world_x <= world_xyz[0] <= self.max_world_x and
+            self.min_world_y <= world_xyz[1] <= self.max_world_y
+        )
 
     def image_callback(self, msg):
         try:
@@ -133,24 +151,35 @@ class VisionNode(Node):
                 
                 contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
                 
-                for contour in contours:
-                    if cv2.contourArea(contour) > 500:
-                        x, y, w, h = cv2.boundingRect(contour)
-                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                        
-                        cx = x + w // 2
-                        cy = y + h // 2
-                        cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
-                        
-                        target_pixel = (cx, cy)
-                        break # Just take the first large one
+                valid = [c for c in contours if cv2.contourArea(c) > 250]
+                if valid:
+                    frame_h, frame_w = frame.shape[:2]
+                    center = np.array([frame_w * 0.5, frame_h * 0.5])
+
+                    # Prefer contour closest to camera center for stable demo picking.
+                    def contour_score(c):
+                        x, y, w, h = cv2.boundingRect(c)
+                        cxy = np.array([x + w * 0.5, y + h * 0.5])
+                        return np.linalg.norm(cxy - center)
+
+                    best = min(valid, key=contour_score)
+                    x, y, w, h = cv2.boundingRect(best)
+                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                    cx = x + w // 2
+                    cy = y + h // 2
+                    cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
+                    target_pixel = (cx, cy)
                         
             if target_pixel is not None and self.fx is not None:
                 world_xyz = self.pixel_to_world(target_pixel[0], target_pixel[1])
-                cv2.putText(frame, f"X:{world_xyz[0]:.2f} Y:{world_xyz[1]:.2f}", 
-                            (target_pixel[0]-20, target_pixel[1]-20), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-                self.publish_pose(world_xyz)
+                if self.is_within_workspace(world_xyz):
+                    cv2.putText(frame, f"X:{world_xyz[0]:.2f} Y:{world_xyz[1]:.2f}", 
+                                (target_pixel[0]-20, target_pixel[1]-20), 
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                    self.publish_pose(world_xyz)
+                else:
+                    cv2.putText(frame, "Target out of workspace", (10, 30),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
                 
             cv2.imshow("Robot Arm Vision", frame)
             cv2.waitKey(1)

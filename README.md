@@ -30,6 +30,8 @@ The core architectural simulation infrastructure is fully established, and we ha
 
 For deep tracking of solved challenges, see [MoveIt_Simulation_Troubleshooting.md](./MoveIt_Simulation_Troubleshooting.md).
 For granular steps forward, refer to [REMAINING_STEPS.md](./REMAINING_STEPS.md).
+For external Arduino/ESP32 USB environment handoff details, see [docs/ARDUINO_PENDRIVE_ENV.md](./docs/ARDUINO_PENDRIVE_ENV.md).
+For gripper calibration note-taking and tested safe limits, see [docs/GRIPPER_LIMIT_CALIBRATION_LOG.md](./docs/GRIPPER_LIMIT_CALIBRATION_LOG.md).
 
 ---
 
@@ -78,4 +80,4 @@ ros2 launch robot_arm_gazebo gazebo_rviz.launch.py
 ```
 
 ## Authors
-**Maintainer:** Natraj
+**Maintainer:** Chepuri Natraj

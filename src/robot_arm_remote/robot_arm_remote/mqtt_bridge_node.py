@@ -8,6 +8,10 @@ import json
 class MqttBridgeNode(Node):
     def __init__(self):
         super().__init__('mqtt_bridge_node')
+
+        # Unified safety bounds (must match local gesture + hardware calibration)
+        self.arm_ranges = [(-1.57, 1.57), (-1.0, 1.0), (-1.0, 1.0), (-1.57, 1.57), (-1.57, 1.57)]
+        self.gripper_range = (-1.0472, 0.0)
         
         # ROS 2 Publishers to local /arm_controller & /gripper_controller
         self.arm_pub = self.create_publisher(JointTrajectory, '/arm_controller/joint_trajectory', 10)
@@ -47,6 +51,9 @@ class MqttBridgeNode(Node):
             if not isinstance(arr_angles, list) or len(arr_angles) != 5:
                 self.get_logger().warn(f"Invalid arm_angles length/type: {arr_angles}")
                 return
+
+            arr_angles = [self.clamp(float(v), *self.arm_ranges[i]) for i, v in enumerate(arr_angles)]
+            grip_angle = self.clamp(float(grip_angle), *self.gripper_range)
             
             # Send to local ROS2 system
             self.publish_arm(arr_angles)
@@ -78,6 +85,10 @@ class MqttBridgeNode(Node):
         point.time_from_start.nanosec = 200_000_000
         msg.points.append(point)
         self.gripper_pub.publish(msg)
+
+    @staticmethod
+    def clamp(value, low, high):
+        return max(low, min(high, value))
 
 def main(args=None):
     rclpy.init(args=args)

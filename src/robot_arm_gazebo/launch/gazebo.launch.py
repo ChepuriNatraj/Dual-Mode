@@ -41,7 +41,7 @@ def generate_launch_description():
         arguments=['-string', robot_description_config,
                    '-name', 'robotic_arm',
                    '-allow_renaming', 'true',
-                   '-z', '0.05'] # Slightly above ground
+                   '-z', '0.0']
     )
 
     # Bridge ROS/Gazebo /clock and /camera/image_raw

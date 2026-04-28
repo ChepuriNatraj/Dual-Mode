@@ -39,6 +39,13 @@ install(
   DESTINATION include
 )
 
+install(
+  PROGRAMS
+    scripts/stress_tester.py
+    scripts/hardware_tester.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 ament_export_include_directories(
   include
 )
