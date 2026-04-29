@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0e1118">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>🤖 ArmOps - Remote Arm Control</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg: #0a0e14;
+            --card: rgba(20, 26, 38, 0.7);
+            --line: rgba(70, 85, 115, 0.35);
+            --text: #e8f0f8;
+            --muted: #9ba8c4;
+            --primary: #0088ff;
+            --primary-glow: rgba(0, 136, 255, 0.25);
+            --accent: #ff9100;
+            --success: #2dd175;
+            --danger: #ff4d4d;
+            --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.4);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: linear-gradient(135deg, #0f172a 0%, var(--bg) 100%);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-height: 100vh;
+        }
+
+        /* ─── HEADER ─── */
+        .header {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        .title-section h1 {
+            margin: 0;
+            font-size: 26px;
+            background: linear-gradient(90deg, #fff, #88ccff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .title-section p {
+            margin: 4px 0 0 0;
+            color: var(--muted);
+            font-size: 13px;
+        }
+        .status-chips {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .chip {
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .chip.mqtt-online {
+            background: rgba(45, 209, 117, 0.2);
+            color: #5fe3a1;
+            border: 1px solid rgba(45, 209, 117, 0.4);
+        }
+        .chip.mqtt-offline {
+            background: rgba(255, 77, 77, 0.2);
+            color: #ff8888;
+            border: 1px solid rgba(255, 77, 77, 0.4);
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        .chip.mqtt-online .status-dot {
+            background: #5fe3a1;
+        }
+        .chip.mqtt-offline .status-dot {
+            background: #ff8888;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* ─── QUICK START GUIDE ─── */
+        .guide-box {
+            background: rgba(0, 100, 180, 0.1);
+            border: 1px solid rgba(0, 136, 255, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            display: none;
+        }
+        .guide-box.show {
+            display: block;
+        }
+        .guide-box h3 {
+            margin: 0 0 10px 0;
+            color: #88ccff;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .guide-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .step {
+            font-size: 13px;
+            color: var(--muted);
+            display: flex;
+            gap: 10px;
+        }
+        .step-num {
+            font-weight: 700;
+            color: var(--primary);
+            min-width: 20px;
+        }
+
+        /* ─── MAIN CONTENT ─── */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 16px;
+            flex: 1;
+        }
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* ─── MODE TABS ─── */
+        .mode-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding: 4px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            border: 1px solid var(--line);
+        }
+        .mode-tab {
+            padding: 12px 16px;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .mode-tab.active {
+            background: var(--primary);
+            color: #fff;
+        }
+        .mode-tab:hover {
+            color: var(--text);
+        }
+
+        /* ─── CONTROL CARDS ─── */
+        .card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 20px;
+            backdrop-filter: blur(8px);
+        }
+        .card h3 {
+            margin: 0 0 16px 0;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        /* ─── JOYSTICK MODE ─── */
+        .joystick-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .joystick-zone {
+            position: relative;
+            width: 100%;
+            padding-bottom: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 2px solid var(--line);
+            border-radius: 12px;
+            cursor: grab;
+            overflow: hidden;
+        }
+        .joystick-zone.active {
+            border-color: var(--primary);
+            background: rgba(0, 136, 255, 0.1);
+        }
+        .joystick-zone::after {
+            content: attr(data-label);
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+        .joystick-inner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        /* ─── AUX CONTROL ─── */
+        .aux-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .aux-block {
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            border: 1px solid var(--line);
+        }
+        .aux-block h4 {
+            margin: 0 0 10px 0;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+        }
+        .button-pair {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        .ctrl-btn {
+            padding: 10px;
+            border: 1px solid var(--line);
+            background: var(--card);
+            color: var(--text);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .ctrl-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+        }
+        .ctrl-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* ─── CAMERA MODE ─── */
+        .camera-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        video, canvas {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .camera-hint {
+            background: rgba(255, 153, 0, 0.15);
+            border: 1px solid rgba(255, 153, 0, 0.35);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #ffb84d;
+        }
+
+        /* ─── RIGHT SIDEBAR ─── */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .info-box {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 14px;
+        }
+        .info-box h4 {
+            margin: 0 0 10px 0;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+        }
+        .telemetry-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .telem-item {
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--line);
+        }
+        .telem-item.label {
+            font-size: 10px;
+            color: var(--muted);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .telem-item.value {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary);
+            font-family: monospace;
+        }
+
+        /* ─── SETTINGS SLIDERS ─── */
+        .setting {
+            margin-bottom: 14px;
+        }
+        .setting-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+        .setting-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+        .setting-value {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(0,0,0,0.3);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            accent-color: var(--primary);
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: none;
+        }
+
+        /* ─── ACTION BUTTONS ─── */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .action-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            box-shadow: 0 8px 24px var(--primary-glow);
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: rgba(0,0,0,0.3);
+            color: var(--text);
+            border: 1px solid var(--line);
+        }
+        .btn-secondary:hover {
+            background: rgba(0,0,0,0.5);
+            border-color: var(--primary);
+        }
+
+        /* ─── TOAST ─── */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(120px);
+            background: rgba(0,0,0,0.9);
+            color: var(--text);
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--line);
+            font-size: 13px;
+            opacity: 0;
+            transition: all 0.3s;
+            pointer-events: none;
+            z-index: 9999;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            .joystick-grid {
+                grid-template-columns: 1fr;
+            }
+            .header {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+            }
+            .status-chips {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="title-section">
+                <h1>🤖 ArmOps Remote</h1>
+                <p>Control your robotic arm from anywhere via MQTT</p>
+            </div>
+            <div class="status-chips">
+                <div class="chip mqtt-offline" id="mqttChip">
+                    <span class="status-dot"></span>
+                    <span id="mqttText">MQTT Offline</span>
+                </div>
+                <button class="action-btn btn-primary" id="connectBtn" style="min-width: 140px;">Connect MQTT</button>
+            </div>
+        </div>
+
+        <!-- QUICK START GUIDE -->
+        <div class="guide-box show" id="guideBox">
+            <h3>🚀 Getting Started</h3>
+            <div class="guide-steps">
+                <div class="step">
+                    <span class="step-num">1</span>
+                    <span>Click <strong>Connect MQTT</strong> button above</span>
+                </div>
+                <div class="step">
+                    <span class="step-num">2</span>
+                    <span>Choose <strong>Joystick</strong> or <strong>Camera</strong> mode</span>
+                </div>
+                <div class="step">
+                    <span class="step-num">3</span>
+                    <span>For Joystick: Drag the circular controls</span>
+                </div>
+                <div class="step">
+                    <span class="step-num">4</span>
+                    <span>For Camera: Click "Start Camera" and show your hand</span>
+                </div>
+                <div class="step">
+                    <span class="step-num">5</span>
+                    <span>Watch the <strong>Telemetry</strong> panel (right) for arm feedback</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <div class="left-panel">
+                <!-- MODE SELECTION -->
+                <div class="mode-tabs">
+                    <button class="mode-tab active" data-mode="joystick">🕹️ Joystick Mode</button>
+                    <button class="mode-tab" data-mode="camera">📷 Camera Mode</button>
+                </div>
+
+                <!-- JOYSTICK MODE -->
+                <div id="joystickMode" class="card">
+                    <h3>Manual Control with Joysticks</h3>
+                    <div class="joystick-grid">
+                        <div class="joystick-zone" id="zone1" data-label="J1 Base (Left) + J2 Shoulder (Up)">
+                            <div class="joystick-inner"></div>
+                        </div>
+                        <div class="joystick-zone" id="zone2" data-label="J3 Elbow (Left) + J4 Wrist (Up)">
+                            <div class="joystick-inner"></div>
+                        </div>
+                    </div>
+
+                    <div class="aux-controls">
+                        <div class="aux-block">
+                            <h4>⚙️ J5 Wrist Roll</h4>
+                            <div class="button-pair">
+                                <button class="ctrl-btn" id="rollLeft">← Roll Left</button>
+                                <button class="ctrl-btn" id="rollRight">Roll Right →</button>
+                            </div>
+                        </div>
+                        <div class="aux-block">
+                            <h4>✋ J6 Gripper</h4>
+                            <div class="button-pair">
+                                <button class="ctrl-btn" id="gripOpen">🔓 Open</button>
+                                <button class="ctrl-btn" id="gripClose">🔒 Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CAMERA MODE -->
+                <div id="cameraMode" class="card" style="display:none;">
+                    <h3>Hand Gesture Tracking</h3>
+                    <button class="action-btn btn-primary" id="cameraBtn" style="width: 100%; margin-bottom: 12px;">📹 Start Camera</button>
+                    <div class="camera-container">
+                        <video id="webcam" playsinline autoplay style="display:none;"></video>
+                        <canvas id="output_canvas"></canvas>
+                        <div style="padding: 10px; background: #000; color: var(--muted); font-size: 12px; text-align: center;">
+                            Camera feed will appear here
+                        </div>
+                    </div>
+                    <div class="camera-hint">
+                        ✨ <strong>Hand Position</strong> = Arm Endpoint | <strong>Pinch Fingers</strong> = Close Gripper
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT SIDEBAR -->
+            <div class="right-panel">
+                <!-- TELEMETRY -->
+                <div class="info-box">
+                    <h4>📊 Live Telemetry</h4>
+                    <div class="telemetry-grid">
+                        <div class="telem-item label">Base (J1)</div>
+                        <div class="telem-item value" id="telem-j1">0.0°</div>
+                        
+                        <div class="telem-item label">Shoulder (J2)</div>
+                        <div class="telem-item value" id="telem-j2">0.0°</div>
+                        
+                        <div class="telem-item label">Elbow (J3)</div>
+                        <div class="telem-item value" id="telem-j3">0.0°</div>
+                        
+                        <div class="telem-item label">Wrist (J4)</div>
+                        <div class="telem-item value" id="telem-j4">0.0°</div>
+                        
+                        <div class="telem-item label">Roll (J5)</div>
+                        <div class="telem-item value" id="telem-j5">0.0°</div>
+                        
+                        <div class="telem-item label">Gripper (J6)</div>
+                        <div class="telem-item value" id="telem-j6">0.0°</div>
+                    </div>
+                </div>
+
+                <!-- SETTINGS -->
+                <div class="info-box">
+                    <h4>⚙️ Settings</h4>
+                    
+                    <div class="setting">
+                        <div class="setting-label">
+                            <span class="setting-name">Speed</span>
+                            <span class="setting-value" id="speedVal">0.040</span>
+                        </div>
+                        <input type="range" id="speedSlider" min="0.01" max="0.1" step="0.01" value="0.040">
+                    </div>
+
+                    <div class="setting">
+                        <div class="setting-label">
+                            <span class="setting-name">Deadzone</span>
+                            <span class="setting-value" id="deadzoneVal">0.08</span>
+                        </div>
+                        <input type="range" id="deadzoneSlider" min="0.02" max="0.25" step="0.01" value="0.08">
+                    </div>
+
+                    <div class="setting">
+                        <div class="setting-label">
+                            <span class="setting-name">Smoothing</span>
+                            <span class="setting-value" id="smoothVal">0.15</span>
+                        </div>
+                        <input type="range" id="smoothSlider" min="0.05" max="0.4" step="0.05" value="0.15">
+                    </div>
+
+                    <div class="setting">
+                        <div class="setting-label">
+                            <span class="setting-name">Publish Rate</span>
+                            <span class="setting-value" id="rateVal">10 Hz</span>
+                        </div>
+                        <input type="range" id="rateSlider" min="5" max="20" step="1" value="10">
+                    </div>
+                </div>
+
+                <!-- ACTION BUTTONS -->
+                <div class="action-buttons">
+                    <button class="action-btn btn-secondary" id="resetBtn">Home Position</button>
+                    <button class="action-btn btn-secondary" id="disconnectBtn" style="display:none;">Disconnect</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script type="module">
+        import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3";
+        
+        // ════════════════════════════════════════════════════════════
+        // STATE & CONFIGURATION
+        // ════════════════════════════════════════════════════════════
+        const CONFIG = {
+            MQTT_BROKER: 'broker.hivemq.com',
+            MQTT_PORT: 8884,
+            MQTT_TOPIC: 'natraj/robot_arm/teleop/target_state',
+            JOINT_RANGES: [
+                [-1.57, 1.57],  // J1 Base
+                [-1.00, 1.00],  // J2 Shoulder
+                [-1.00, 1.00],  // J3 Elbow
+                [-1.57, 1.57],  // J4 Wrist Pitch
+                [-1.57, 1.57],  // J5 Wrist Roll
+                [-1.0472, 0.0]  // J6 Gripper (open=0, close=-60°)
+            ]
+        };
+
+        let state = {
+            mqttConnected: false,
+            currentMode: 'joystick',
+            armAngles: [0, 0, 0, 0, 0],
+            gripperAngle: 0,
+            speed: 0.040,
+            deadzone: 0.08,
+            smoothing: 0.15,
+            publishRate: 10,
+            publishInterval: null
+        };
+
+        let mqttClient = null;
+        let handLandmarker = null;
+        let cameraActive = false;
+
+        // ════════════════════════════════════════════════════════════
+        // UI ELEMENTS
+        // ════════════════════════════════════════════════════════════
+        const connectBtn = document.getElementById('connectBtn');
+        const mqttChip = document.getElementById('mqttChip');
+        const mqttText = document.getElementById('mqttText');
+        const guideBox = document.getElementById('guideBox');
+        const modeTabs = document.querySelectorAll('.mode-tab');
+        const toast = document.getElementById('toast');
+
+        // ════════════════════════════════════════════════════════════
+        // UTILITY FUNCTIONS
+        // ════════════════════════════════════════════════════════════
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        function updateMQTTStatus(connected) {
+            state.mqttConnected = connected;
+            if (connected) {
+                mqttChip.classList.remove('mqtt-offline');
+                mqttChip.classList.add('mqtt-online');
+                mqttText.textContent = 'MQTT Online';
+                connectBtn.textContent = 'Disconnect';
+                guideBox.classList.remove('show');
+            } else {
+                mqttChip.classList.remove('mqtt-online');
+                mqttChip.classList.add('mqtt-offline');
+                mqttText.textContent = 'MQTT Offline';
+                connectBtn.textContent = 'Connect MQTT';
+                guideBox.classList.add('show');
+            }
+        }
+
+        function clamp(val, min, max) {
+            return Math.max(min, Math.min(max, val));
+        }
+
+        function toRadians(deg) {
+            return deg * Math.PI / 180;
+        }
+
+        function toDegrees(rad) {
+            return rad * 180 / Math.PI;
+        }
+
+        function updateTelemetry() {
+            document.getElementById('telem-j1').textContent = state.armAngles[0].toFixed(1) + '°';
+            document.getElementById('telem-j2').textContent = state.armAngles[1].toFixed(1) + '°';
+            document.getElementById('telem-j3').textContent = state.armAngles[2].toFixed(1) + '°';
+            document.getElementById('telem-j4').textContent = state.armAngles[3].toFixed(1) + '°';
+            document.getElementById('telem-j5').textContent = state.armAngles[4].toFixed(1) + '°';
+            document.getElementById('telem-j6').textContent = state.gripperAngle.toFixed(1) + '°';
+        }
+
+        function publishToMQTT() {
+            if (!state.mqttConnected || !mqttClient) return;
+            
+            const payload = {
+                arm_angles: state.armAngles.map(a => parseFloat(a.toFixed(3))),
+                gripper_angle: parseFloat(state.gripperAngle.toFixed(3))
+            };
+            
+            try {
+                mqttClient.publish(CONFIG.MQTT_TOPIC, JSON.stringify(payload), 0, false);
+            } catch (e) {
+                console.warn('Publish failed:', e);
+            }
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // MQTT CONNECTION
+        // ════════════════════════════════════════════════════════════
+        function connectMQTT() {
+            if (state.mqttConnected) {
+                mqttClient.disconnect();
+                updateMQTTStatus(false);
+                return;
+            }
+
+            const clientId = `armops_${Math.random().toString(16).slice(2, 10)}`;
+            mqttClient = new Paho.MQTT.Client(
+                CONFIG.MQTT_BROKER,
+                CONFIG.MQTT_PORT,
+                '/mqtt',
+                clientId
+            );
+
+            mqttClient.onConnectionLost = () => {
+                updateMQTTStatus(false);
+                showToast('❌ MQTT Connection Lost');
+            };
+
+            mqttClient.connect({
+                useSSL: true,
+                timeout: 8,
+                onSuccess: () => {
+                    updateMQTTStatus(true);
+                    showToast('✅ Connected to MQTT Broker');
+                    startPublishLoop();
+                },
+                onFailure: () => {
+                    showToast('❌ Failed to connect to MQTT');
+                }
+            });
+        }
+
+        function startPublishLoop() {
+            if (state.publishInterval) clearInterval(state.publishInterval);
+            state.publishInterval = setInterval(publishToMQTT, 1000 / state.publishRate);
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // MODE SWITCHING
+        // ════════════════════════════════════════════════════════════
+        modeTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                modeTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                const mode = tab.dataset.mode;
+                state.currentMode = mode;
+                
+                document.getElementById('joystickMode').style.display = mode === 'joystick' ? 'block' : 'none';
+                document.getElementById('cameraMode').style.display = mode === 'camera' ? 'block' : 'none';
+            });
+        });
+
+        // ════════════════════════════════════════════════════════════
+        // SETTINGS SLIDERS
+        // ════════════════════════════════════════════════════════════
+        document.getElementById('speedSlider').addEventListener('input', (e) => {
+            state.speed = parseFloat(e.target.value);
+            document.getElementById('speedVal').textContent = state.speed.toFixed(3);
+        });
+
+        document.getElementById('deadzoneSlider').addEventListener('input', (e) => {
+            state.deadzone = parseFloat(e.target.value);
+            document.getElementById('deadzoneVal').textContent = state.deadzone.toFixed(2);
+        });
+
+        document.getElementById('smoothSlider').addEventListener('input', (e) => {
+            state.smoothing = parseFloat(e.target.value);
+            document.getElementById('smoothVal').textContent = state.smoothing.toFixed(2);
+        });
+
+        document.getElementById('rateSlider').addEventListener('input', (e) => {
+            state.publishRate = parseInt(e.target.value);
+            document.getElementById('rateVal').textContent = state.publishRate + ' Hz';
+            if (state.mqttConnected) startPublishLoop();
+        });
+
+        // ════════════════════════════════════════════════════════════
+        // BUTTON CONTROLS
+        // ════════════════════════════════════════════════════════════
+        connectBtn.addEventListener('click', connectMQTT);
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            state.armAngles = [0, 0, 0, 0, 0];
+            state.gripperAngle = 0;
+            updateTelemetry();
+            publishToMQTT();
+            showToast('🏠 Home position sent');
+        });
+
+        // ════════════════════════════════════════════════════════════
+        // INIT
+        // ════════════════════════════════════════════════════════════
+        document.body.addEventListener('DOMContentLoaded', () => {
+            updateTelemetry();
+            showToast('👋 Welcome to ArmOps Remote Control');
+        });
+
+        // Fallback init if DOMContentLoaded already fired
+        updateTelemetry();
+        showToast('👋 Welcome to ArmOps Remote Control');
+    </script>
+
+    <!-- Paho MQTT Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.js"></script>
+</body>
+</html>
