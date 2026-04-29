@@ -655,8 +655,8 @@
         // STATE & CONFIGURATION
         // ════════════════════════════════════════════════════════════
         const CONFIG = {
-            MQTT_BROKER: 'broker.hivemq.com',
-            MQTT_PORT: 8884,
+            MQTT_BROKER: 'broker.emqx.io',
+            MQTT_PORT: window.location.protocol === 'https:' ? 8084 : 8083,
             MQTT_TOPIC: 'natraj/robot_arm/teleop/target_state',
             JOINT_RANGES: [
                 [-1.57, 1.57],  // J1 Base
@@ -780,7 +780,7 @@
             };
 
             mqttClient.connect({
-                useSSL: true,
+                useSSL: window.location.protocol === 'https:',
                 timeout: 8,
                 onSuccess: () => {
                     updateMQTTStatus(true);

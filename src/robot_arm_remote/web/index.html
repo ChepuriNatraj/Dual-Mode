@@ -767,8 +767,8 @@
         });
 
         function connectMqtt() {
-            const host = "broker.hivemq.com";
-            const port = isHttps ? 8884 : 8000;
+            const host = "broker.emqx.io";
+            const port = isHttps ? 8084 : 8083;
             const clientId = `armops_${Math.random().toString(16).slice(2, 10)}`;
             mqttClient = new Paho.MQTT.Client(host, port, "/mqtt", clientId);
 

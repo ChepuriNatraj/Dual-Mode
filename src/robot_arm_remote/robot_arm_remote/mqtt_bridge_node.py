@@ -10,7 +10,7 @@ class MqttBridgeNode(Node):
         super().__init__('mqtt_bridge_node')
 
         # Parameters (overridable via ros2 launch / ros-args)
-        self.declare_parameter('broker', 'broker.hivemq.com')
+        self.declare_parameter('broker', 'broker.emqx.io')
         self.declare_parameter('port', 1883)
         self.declare_parameter('topic', 'natraj/robot_arm/teleop/target_state')
         self.declare_parameter('telemetry_topic', 'natraj/robot_arm/teleop/state')
