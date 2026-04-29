@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-    <xacro:macro name="robotic_arm_ros2_control" params="name initial_positions_file">
+    <xacro:macro name="robotic_arm_ros2_control" params="name initial_positions_file serial_port baud_rate">
         <xacro:property name="initial_positions" value="${xacro.load_yaml(initial_positions_file)['initial_positions']}"/>
 
         <ros2_control name="${name}" type="system">
             <hardware>
                 <!-- Connects MoveIt 2 directly to the ESP32 Hardware Interface -->
                 <plugin>robot_arm_hardware/RobotArmSystemHardware</plugin>
-                <param name="port">/dev/ttyUSB0</param>
-                <param name="baud_rate">115200</param>
+                <param name="port">${serial_port}</param>
+                <param name="baud_rate">${baud_rate}</param>
             </hardware>
             <joint name="link_1">
                 <command_interface name="position"/>

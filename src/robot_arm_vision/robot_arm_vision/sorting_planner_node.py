@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 import time
 
 # NOTE: Since moveit_py might not be fully configured in the environment 
@@ -31,6 +32,10 @@ class SortingPlannerNode(Node):
             '/target_pose',
             self.target_callback,
             1)
+        
+        # Publish to autonomous controller (mode_manager will arbitrate)
+        self.arm_pub = self.create_publisher(JointTrajectory, '/auto_controller/joint_trajectory', 10)
+        self.gripper_pub = self.create_publisher(JointTrajectory, '/auto_controller/gripper_trajectory', 10)
             
         self.is_busy = False
         
@@ -45,6 +50,9 @@ class SortingPlannerNode(Node):
             self.robot = MoveItPy(node_name="sorting_planner")
             self.arm_group = self.robot.get_planning_component("arm")
             self.gripper_group = self.robot.get_planning_component("gripper")
+            
+            # Get the controller manager to execute trajectories
+            self.controller_manager = self.robot._control_node
             self.get_logger().info('Sorting planner ready. Waiting for targets...')
         except Exception as e:
             self.get_logger().error(f"Failed to init MoveItPy: {e}")
@@ -75,6 +83,22 @@ class SortingPlannerNode(Node):
 
         self.get_logger().info('--- STARTED AI SORTING LOOP ---')
         
+        # Helper function to execute and publish a trajectory
+        def publish_trajectory(group, trajectory):
+            """Extract trajectory from plan and publish directly to mode_manager."""
+            if trajectory is None:
+                return False
+            try:
+                # Publish to auto_controller topic so mode_manager can arbitrate
+                self.arm_pub.publish(trajectory)
+                # Wait for execution (approximate - use MoveIt's actual execution timing)
+                time.sleep(max(2.0, trajectory.points[-1].time_from_start.sec + 
+                              trajectory.points[-1].time_from_start.nanosec / 1e9))
+                return True
+            except Exception as e:
+                self.get_logger().error(f"Failed to publish trajectory: {e}")
+                return False
+        
         # 1. Pre-Grasp
         self.get_logger().info('1. Planning Pre-Grasp')
         pre_grasp_pose = PoseStamped()
@@ -87,10 +111,10 @@ class SortingPlannerNode(Node):
         pre_grasp_pose.pose.orientation.z = 0.0
         pre_grasp_pose.pose.orientation.w = 0.0
         
-        self.arm_group.set_goal_state(pose_stamped_msg=pre_grasp_pose, pose_link="link_6") # Adjust link to your tip link
+        self.arm_group.set_goal_state(pose_stamped_msg=pre_grasp_pose, pose_link="link_6")
         plan_result = self.arm_group.plan()
-        if plan_result:
-            self.robot.execute(plan_result.trajectory, controllers=[])
+        if plan_result and hasattr(plan_result, 'trajectory'):
+            publish_trajectory(self.arm_group, plan_result.trajectory)
         else:
             raise Exception("Failed to plan to pre-grasp")
 
@@ -98,8 +122,19 @@ class SortingPlannerNode(Node):
         self.get_logger().info('2. Opening Gripper')
         self.gripper_group.set_goal_state(configuration_name="open")
         plan_result = self.gripper_group.plan()
-        if plan_result:
-            self.robot.execute(plan_result.trajectory, controllers=[])
+        if plan_result and hasattr(plan_result, 'trajectory'):
+            # Publish gripper trajectory
+            gripper_msg = JointTrajectory()
+            gripper_msg.header.frame_id = "world"
+            gripper_msg.header.stamp = self.get_clock().now().to_msg()
+            gripper_msg.joint_names = ['link_6']
+            pt = JointTrajectoryPoint()
+            pt.positions = [0.0]  # Open position
+            pt.time_from_start.sec = 0
+            pt.time_from_start.nanosec = 500_000_000  # 0.5s
+            gripper_msg.points.append(pt)
+            self.arm_pub.publish(gripper_msg)
+            time.sleep(0.6)
 
         # 3. Grasp
         self.get_logger().info('3. Moving to Grasp')
@@ -111,15 +146,27 @@ class SortingPlannerNode(Node):
         grasp_pose.pose.orientation = pre_grasp_pose.pose.orientation
         self.arm_group.set_goal_state(pose_stamped_msg=grasp_pose, pose_link="link_6")
         plan_result = self.arm_group.plan()
-        if plan_result:
-            self.robot.execute(plan_result.trajectory, controllers=[])
+        if plan_result and hasattr(plan_result, 'trajectory'):
+            publish_trajectory(self.arm_group, plan_result.trajectory)
+        else:
+            raise Exception("Failed to plan to grasp")
 
         # 4. Close Gripper
         self.get_logger().info('4. Closing Gripper')
         self.gripper_group.set_goal_state(configuration_name="close")
         plan_result = self.gripper_group.plan()
-        if plan_result:
-            self.robot.execute(plan_result.trajectory, controllers=[])
+        if plan_result and hasattr(plan_result, 'trajectory'):
+            gripper_msg = JointTrajectory()
+            gripper_msg.header.frame_id = "world"
+            gripper_msg.header.stamp = self.get_clock().now().to_msg()
+            gripper_msg.joint_names = ['link_6']
+            pt = JointTrajectoryPoint()
+            pt.positions = [-1.0472]  # Close position (~60 degrees)
+            pt.time_from_start.sec = 0
+            pt.time_from_start.nanosec = 500_000_000
+            gripper_msg.points.append(pt)
+            self.arm_pub.publish(gripper_msg)
+            time.sleep(0.6)
 
         # 5. Lift up
         self.get_logger().info('5. Lifting Object')
@@ -131,8 +178,8 @@ class SortingPlannerNode(Node):
         lift_pose.pose.orientation = pre_grasp_pose.pose.orientation
         self.arm_group.set_goal_state(pose_stamped_msg=lift_pose, pose_link="link_6")
         plan_result = self.arm_group.plan()
-        if plan_result:
-            self.robot.execute(plan_result.trajectory, controllers=[])
+        if plan_result and hasattr(plan_result, 'trajectory'):
+            publish_trajectory(self.arm_group, plan_result.trajectory)
 
         # 6. Drop Area
         self.get_logger().info('6. Moving to Drop Bin')
@@ -145,22 +192,32 @@ class SortingPlannerNode(Node):
         
         self.arm_group.set_goal_state(pose_stamped_msg=drop_pose, pose_link="link_6")
         plan_result = self.arm_group.plan()
-        if plan_result:
-            self.robot.execute(plan_result.trajectory, controllers=[])
+        if plan_result and hasattr(plan_result, 'trajectory'):
+            publish_trajectory(self.arm_group, plan_result.trajectory)
 
         # 7. Open
         self.get_logger().info('7. Releasing Object')
         self.gripper_group.set_goal_state(configuration_name="open")
         plan_result = self.gripper_group.plan()
-        if plan_result:
-            self.robot.execute(plan_result.trajectory, controllers=[])
+        if plan_result and hasattr(plan_result, 'trajectory'):
+            gripper_msg = JointTrajectory()
+            gripper_msg.header.frame_id = "world"
+            gripper_msg.header.stamp = self.get_clock().now().to_msg()
+            gripper_msg.joint_names = ['link_6']
+            pt = JointTrajectoryPoint()
+            pt.positions = [0.0]  # Open position
+            pt.time_from_start.sec = 0
+            pt.time_from_start.nanosec = 500_000_000
+            gripper_msg.points.append(pt)
+            self.arm_pub.publish(gripper_msg)
+            time.sleep(0.6)
         
         # 8. Home
         self.get_logger().info('8. Returning Home')
         self.arm_group.set_goal_state(configuration_name="home")
         plan_result = self.arm_group.plan()
-        if plan_result:
-            self.robot.execute(plan_result.trajectory, controllers=[])
+        if plan_result and hasattr(plan_result, 'trajectory'):
+            publish_trajectory(self.arm_group, plan_result.trajectory)
             
         self.get_logger().info('--- CYCLE COMPLETE ---')
 

@@ -9,28 +9,49 @@ class MqttBridgeNode(Node):
     def __init__(self):
         super().__init__('mqtt_bridge_node')
 
+        # Parameters (overridable via ros2 launch / ros-args)
+        self.declare_parameter('broker', 'broker.hivemq.com')
+        self.declare_parameter('port', 1883)
+        self.declare_parameter('topic', 'natraj/robot_arm/teleop/target_state')
+        self.declare_parameter('telemetry_topic', 'natraj/robot_arm/teleop/state')
+        self.declare_parameter('mqtt_timeout_sec', 3.0)
+        self.declare_parameter('client_id', '')
+
         # Unified safety bounds (must match local gesture + hardware calibration)
         self.arm_ranges = [(-1.57, 1.57), (-1.0, 1.0), (-1.0, 1.0), (-1.57, 1.57), (-1.57, 1.57)]
         self.gripper_range = (-1.0472, 0.0)
-        
+
         # ROS 2 Publishers to local /arm_controller & /gripper_controller
         self.arm_pub = self.create_publisher(JointTrajectory, '/arm_controller/joint_trajectory', 10)
         self.gripper_pub = self.create_publisher(JointTrajectory, '/gripper_controller/joint_trajectory', 10)
 
-        # Connect to public HiveMQ WebSocket broker
-        self.broker = "broker.hivemq.com"
-        self.port = 1883
-        self.topic = "natraj/robot_arm/teleop/target_state"
-        
-        self.client = mqtt.Client()
+        # Read params
+        self.broker = str(self.get_parameter('broker').value)
+        self.port = int(self.get_parameter('port').value)
+        self.topic = str(self.get_parameter('topic').value)
+        self.telemetry_topic = str(self.get_parameter('telemetry_topic').value)
+        self.mqtt_timeout = float(self.get_parameter('mqtt_timeout_sec').value)
+        client_id = str(self.get_parameter('client_id').value) or None
+
+        # MQTT client
+        self.client = mqtt.Client(client_id=client_id)
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
 
         self.rx_count = 0
-        
+        self.last_rx_ts = None
+        self.last_arm = [0.0] * 5
+        self.last_grip = 0.0
+
         self.get_logger().info(f"Connecting to MQTT broker at {self.broker}:{self.port}...")
-        self.client.connect(self.broker, self.port, 60)
-        self.client.loop_start()
+        try:
+            self.client.connect(self.broker, self.port, 60)
+            self.client.loop_start()
+        except Exception as e:
+            self.get_logger().error(f"MQTT connect failed: {e}")
+
+        # Watchdog timer to detect MQTT dropout/safety
+        self.create_timer(0.5, self._watchdog_tick)
 
     def on_connect(self, client, userdata, flags, rc):
         self.get_logger().info(f"Connected to HiveMQ with result code {rc}")
@@ -54,10 +75,15 @@ class MqttBridgeNode(Node):
 
             arr_angles = [self.clamp(float(v), *self.arm_ranges[i]) for i, v in enumerate(arr_angles)]
             grip_angle = self.clamp(float(grip_angle), *self.gripper_range)
-            
+
             # Send to local ROS2 system
             self.publish_arm(arr_angles)
             self.publish_gripper(grip_angle)
+
+            # Save last seen for telemetry and watchdog
+            self.last_arm = arr_angles
+            self.last_grip = grip_angle
+            self.last_rx_ts = self.get_clock().now()
 
             self.rx_count += 1
             if self.rx_count % 20 == 0:
@@ -85,6 +111,27 @@ class MqttBridgeNode(Node):
         point.time_from_start.nanosec = 200_000_000
         msg.points.append(point)
         self.gripper_pub.publish(msg)
+        # Optionally publish telemetry back to MQTT clients
+        try:
+            payload = json.dumps({
+                'arm_angles': [float(x) for x in self.last_arm],
+                'gripper_angle': float(self.last_grip),
+                'rx_count': self.rx_count,
+                'ts': int(self.get_clock().now().nanoseconds / 1_000_000)
+            })
+            # Use low QoS, non-blocking
+            if getattr(self, 'telemetry_topic', None):
+                self.client.publish(self.telemetry_topic, payload, qos=0)
+        except Exception:
+            pass
+
+    def _watchdog_tick(self):
+        # If we've not received any MQTT messages within mqtt_timeout, issue a warning.
+        if self.last_rx_ts is None:
+            return
+        age = (self.get_clock().now() - self.last_rx_ts).nanoseconds / 1_000_000_000.0
+        if age > self.mqtt_timeout:
+            self.get_logger().warn(f"No MQTT messages for {age:.1f}s (timeout={self.mqtt_timeout}s).")
 
     @staticmethod
     def clamp(value, low, high):

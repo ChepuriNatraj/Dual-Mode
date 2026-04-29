@@ -40,6 +40,11 @@ install(
 )
 
 install(
+  DIRECTORY launch/
+  DESTINATION share/${PROJECT_NAME}
+)
+
+install(
   PROGRAMS
     scripts/stress_tester.py
     scripts/hardware_tester.py

@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robotic_arm">
     <xacro:arg name="initial_positions_file" default="initial_positions.yaml" />
+    <xacro:arg name="serial_port" default="/dev/ttyUSB0" />
+    <xacro:arg name="baud_rate" default="115200" />
 
     <!-- Import robotic_arm urdf file -->
     <xacro:include filename="$(find robotic_arm_description)/urdf/robotic_arm.xacro" />
@@ -10,7 +12,11 @@
 
     <xacro:arg name="use_fake_hardware" default="true"/>
     <xacro:if value="$(arg use_fake_hardware)">
-        <xacro:robotic_arm_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/>
+        <xacro:robotic_arm_ros2_control
+            name="FakeSystem"
+            initial_positions_file="$(arg initial_positions_file)"
+            serial_port="$(arg serial_port)"
+            baud_rate="$(arg baud_rate)"/>
 
     </xacro:if>
 </robot>
