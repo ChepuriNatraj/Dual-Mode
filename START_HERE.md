@@ -90,7 +90,7 @@ This is what you'll use in ROS launch
 |------|---------|------------|
 | `ESP32_CAM_QUICK_START.md` | Step-by-step checklist | Follow this NOW |
 | `ESP32_CAM_COMPLETE_SETUP.md` | Detailed explanations | If something fails, read details here |
-| `PROJECT_PROGRESS_COMPREHENSIVE.md` | Full project overview | Reference for completed tasks |
+| `docs/PROJECT_PROGRESS_COMPREHENSIVE.md` | Full project overview | Reference for completed tasks |
 | `FIND_ESP32_CAM_IP.md` | IP finding guide | For finding IP if needed |
 
 ---

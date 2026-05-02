@@ -648,6 +648,7 @@
 
     <div class="toast" id="toast"></div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.js"></script>
     <script type="module">
         import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3";
         
@@ -659,7 +660,7 @@
             MQTT_PORT: window.location.protocol === 'https:' ? 8084 : 8083,
             MQTT_TOPIC: 'natraj/robot_arm/teleop/target_state',
             JOINT_RANGES: [
-                [-1.57, 1.57],  // J1 Base
+                [-3.14, 3.14],  // J1 Base
                 [-1.00, 1.00],  // J2 Shoulder
                 [-1.00, 1.00],  // J3 Elbow
                 [-1.57, 1.57],  // J4 Wrist Pitch
@@ -766,31 +767,39 @@
                 return;
             }
 
-            const clientId = `armops_${Math.random().toString(16).slice(2, 10)}`;
-            mqttClient = new Paho.MQTT.Client(
-                CONFIG.MQTT_BROKER,
-                CONFIG.MQTT_PORT,
-                '/mqtt',
-                clientId
-            );
+            try {
+                const clientId = `armops_${Math.random().toString(16).slice(2, 10)}`;
+                mqttClient = new Paho.MQTT.Client(
+                    CONFIG.MQTT_BROKER,
+                    CONFIG.MQTT_PORT,
+                    '/mqtt',
+                    clientId
+                );
 
-            mqttClient.onConnectionLost = () => {
-                updateMQTTStatus(false);
-                showToast('❌ MQTT Connection Lost');
-            };
+                mqttClient.onConnectionLost = (resp) => {
+                    updateMQTTStatus(false);
+                    showToast('❌ MQTT Connection Lost: ' + (resp.errorMessage || ''));
+                };
 
-            mqttClient.connect({
-                useSSL: window.location.protocol === 'https:',
-                timeout: 8,
-                onSuccess: () => {
-                    updateMQTTStatus(true);
-                    showToast('✅ Connected to MQTT Broker');
-                    startPublishLoop();
-                },
-                onFailure: () => {
-                    showToast('❌ Failed to connect to MQTT');
-                }
-            });
+                showToast('⏳ Connecting to ' + CONFIG.MQTT_BROKER + ':' + CONFIG.MQTT_PORT + '...');
+                
+                mqttClient.connect({
+                    useSSL: window.location.protocol === 'https:',
+                    timeout: 8,
+                    onSuccess: () => {
+                        updateMQTTStatus(true);
+                        showToast('✅ Connected to MQTT Broker!');
+                        startPublishLoop();
+                    },
+                    onFailure: (err) => {
+                        console.error('MQTT connection failed:', err);
+                        showToast('❌ Connection Failed: ' + (err.errorMessage || err.message || 'Timeout/Blocked'));
+                    }
+                });
+            } catch (err) {
+                console.error('MQTT setup error:', err);
+                showToast('⚠️ Init Error: ' + err.message);
+            }
         }
 
         function startPublishLoop() {
@@ -863,8 +872,5 @@
         updateTelemetry();
         showToast('👋 Welcome to ArmOps Remote Control');
     </script>
-
-    <!-- Paho MQTT Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.js"></script>
 </body>
 </html>

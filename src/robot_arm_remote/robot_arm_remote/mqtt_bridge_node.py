@@ -18,7 +18,7 @@ class MqttBridgeNode(Node):
         self.declare_parameter('client_id', '')
 
         # Unified safety bounds (must match local gesture + hardware calibration)
-        self.arm_ranges = [(-1.57, 1.57), (-1.0, 1.0), (-1.0, 1.0), (-1.57, 1.57), (-1.57, 1.57)]
+        self.arm_ranges = [(-3.14, 3.14), (-1.0, 1.0), (-1.0, 1.0), (-1.57, 1.57), (-1.57, 1.57)]
         self.gripper_range = (-1.0472, 0.0)
 
         # ROS 2 Publishers to local /arm_controller & /gripper_controller

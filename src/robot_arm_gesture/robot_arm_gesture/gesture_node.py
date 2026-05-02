@@ -43,7 +43,7 @@ class GestureControlNode(Node):
             self.local_arm_pub = self.create_publisher(JointTrajectory, self.local_arm_topic, 10)
         
         # Mapping ranges (Tune these based on URDF and hardware limits)
-        self.link_1_range = [-1.57, 1.57]  # Base rotation
+        self.link_1_range = [-3.14, 3.14]  # Base rotation (Expanded for full workspace access)
         self.link_2_range = [-1.0, 1.0]    # Shoulder
         self.link_3_range = [-1.0, 1.0]    # Elbow
         self.link_4_range = [-1.57, 1.57]  # Wrist flex
@@ -107,7 +107,7 @@ class GestureControlNode(Node):
             candidates.append(Path(env_model))
 
         # Workspace default used in this repository.
-        candidates.append(Path('/home/natraj/file/src/hand gesture/hand_landmarker.task'))
+        candidates.append(Path('/home/natraj/file/archive/hand_gesture_demo/hand_landmarker.task'))
 
         for candidate in candidates:
             if candidate.exists() and candidate.is_file():
@@ -189,22 +189,21 @@ class GestureControlNode(Node):
             pinky_mcp = hand_landmarks[17]
 
             # 1. Base Joint (link_1)
-            base_angle = self.map_range(wrist.x, 0.2, 0.8, self.link_1_range[1], self.link_1_range[0])
+            # Reduced X-bounds so a smaller hand sweep provides full workspace reach.
+            base_angle = self.map_range(wrist.x, 0.3, 0.7, self.link_1_range[1], self.link_1_range[0])
             target_arm_angles[0] = self.clamp(base_angle, self.link_1_range[0], self.link_1_range[1])
 
             # 2. Shoulder & Elbow (link_2 & link_3)
-            # Use a combination of vertical (y) and depth (z) to get forward/back and up/down
-            # Depth is often more indicative of forward/back motion; MediaPipe z is negative when
-            # the hand is closer to the camera. We invert z so larger -> forward for mapping.
-            try:
-                wrist_z = float(wrist.z)
-            except Exception:
-                wrist_z = 0.0
-
+            # wrist.z is relative and stays near 0. Instead, compute apparent hand size
+            # (distance from wrist to index_mcp) as a reliable proxy for physical depth.
+            hand_size = math.hypot(wrist.x - index_mcp.x, wrist.y - index_mcp.y)
+            
             vertical_component = self.map_range(wrist.y, 0.2, 0.8, self.link_2_range[1], self.link_2_range[0])
-            depth_component = self.map_range(-wrist_z, -0.4, 0.0, self.link_2_range[0], self.link_2_range[1])
-            # Blend depth and vertical: prioritize depth for forward/back
-            shoulder_angle = (0.65 * depth_component) + (0.35 * vertical_component)
+            # Larger hand_size means hand is close (move forward), smaller means hand is far (move backward)
+            depth_component = self.map_range(hand_size, 0.08, 0.25, self.link_2_range[0], self.link_2_range[1])
+            
+            # Blend depth and vertical: prioritize apparent depth for forward/back motion
+            shoulder_angle = (0.7 * depth_component) + (0.3 * vertical_component)
             target_arm_angles[1] = self.clamp(shoulder_angle, self.link_2_range[0], self.link_2_range[1])
             # Elbow follows shoulder with opposite sign but reduced magnitude
             target_arm_angles[2] = self.clamp(-shoulder_angle * 0.5, self.link_3_range[0], self.link_3_range[1])

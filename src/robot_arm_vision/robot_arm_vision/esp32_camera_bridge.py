@@ -74,7 +74,11 @@ class ESP32CameraBridge(Node):
             try:
                 if self.cap is None:
                     self.get_logger().info(f"Attempting to connect to {self.esp32_url}...")
-                    self.cap = cv2.VideoCapture(self.esp32_url)
+                    
+                    # Convert string digit to int for local USB/DroidCam cameras
+                    source = int(self.esp32_url) if str(self.esp32_url).isdigit() else self.esp32_url
+                    self.cap = cv2.VideoCapture(source)
+                    
                     if not self.cap.isOpened():
                         self.get_logger().error(f"Failed to open camera stream. Retrying in {self.reconnect_interval}s...")
                         self.cap = None

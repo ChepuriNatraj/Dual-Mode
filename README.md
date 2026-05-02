@@ -28,8 +28,8 @@ The core architectural simulation infrastructure is fully established, and we ha
 - [x] Develop MQTT Bridge for internet-based control (`robot_arm_remote`)
 - [x] Construct custom ROS2 C++ `hardware_interface` for physical servos
 
-For deep tracking of solved challenges, see [MoveIt_Simulation_Troubleshooting.md](./MoveIt_Simulation_Troubleshooting.md).
-For granular steps forward, refer to [REMAINING_STEPS.md](./REMAINING_STEPS.md).
+For deep tracking of solved challenges, see [MoveIt_Simulation_Troubleshooting.md](./docs/MoveIt_Simulation_Troubleshooting.md).
+For granular steps forward, refer to [REMAINING_STEPS.md](./docs/REMAINING_STEPS.md).
 For external Arduino/ESP32 USB environment handoff details, see [docs/ARDUINO_PENDRIVE_ENV.md](./docs/ARDUINO_PENDRIVE_ENV.md).
 For gripper calibration note-taking and tested safe limits, see [docs/GRIPPER_LIMIT_CALIBRATION_LOG.md](./docs/GRIPPER_LIMIT_CALIBRATION_LOG.md).
 
@@ -49,8 +49,8 @@ For gripper calibration note-taking and tested safe limits, see [docs/GRIPPER_LI
 │   └── robot_arm_remote/           # MQTT Bridge and GitHub Pages Web UI
 ├── progress.md                     # Raw checklist of accomplished tasks
 ├── PROGRESS.md                     # Detailed phases and bug fixes tracking
-├── REMAINING_STEPS.md              # Live checklist for the remaining Vision & AI phases
-├── MoveIt_Simulation_Troubleshooting.md # Guide covering 8 major MoveIt/Gazebo bugs faced
+├── docs/REMAINING_STEPS.md              # Live checklist for the remaining Vision & AI phases
+├── docs/MoveIt_Simulation_Troubleshooting.md # Guide covering 8 major MoveIt/Gazebo bugs faced
 └── (Build artifacts naturally excluded via .gitignore)
 ```
 
