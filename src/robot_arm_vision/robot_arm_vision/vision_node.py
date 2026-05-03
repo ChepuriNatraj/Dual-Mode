@@ -33,6 +33,9 @@ class VisionNode(Node):
             
         # Publisher
         self.pose_pub = self.create_publisher(PoseStamped, '/target_pose', 10)
+        # Republish camera image and info for RViz display
+        self.image_pub = self.create_publisher(Image, '/camera/image_annotated', 10)
+        self.info_pub = self.create_publisher(CameraInfo, '/camera/camera_info', 10)
         
         # Camera parameters
         self.fx = None
@@ -66,6 +69,8 @@ class VisionNode(Node):
         self.fy = msg.k[4]
         self.cx = msg.k[2]
         self.cy = msg.k[5]
+        # Republish camera info for RViz
+        self.info_pub.publish(msg)
 
     def pixel_to_world(self, u, v):
         if self.fx is None:
@@ -180,6 +185,14 @@ class VisionNode(Node):
                 else:
                     cv2.putText(frame, "Target out of workspace", (10, 30),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            
+            # Republish annotated frame for RViz display
+            try:
+                annotated_msg = self.bridge.cv2_to_imgmsg(frame, encoding='bgr8')
+                annotated_msg.header = msg.header
+                self.image_pub.publish(annotated_msg)
+            except Exception as e:
+                self.get_logger().error(f'Failed to republish annotated image: {e}')
                 
             cv2.imshow("Robot Arm Vision", frame)
             cv2.waitKey(1)

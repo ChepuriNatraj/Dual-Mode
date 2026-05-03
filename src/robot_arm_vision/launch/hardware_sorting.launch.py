@@ -5,21 +5,19 @@ Complete Hardware Autonomous Sorting Launch
 Launches the full autonomous sorting pipeline on real hardware:
 1. Hardware initialization (ros2_control, controller manager, controllers)
 2. Robot state publisher and joint state broadcaster
-3. ESP32 camera MJPEG stream bridge
-4. Vision processing node (YOLO object detection + calibration)
-5. Sorting planner node (MoveIt trajectory planning + execution)
-6. Mode manager (set to AUTONOMOUS for autonomous control)
+3. Vision processing node (YOLO object detection + calibration)
+4. Sorting planner node (MoveIt trajectory planning + execution)
+5. Mode manager (set to AUTONOMOUS for autonomous control)
+6. RViz2 with camera display from /camera/image_raw topic
 
 Usage:
     ros2 launch robot_arm_vision hardware_sorting.launch.py \
         serial_port:=/dev/ttyUSB0 \
-        baud_rate:=115200 \
-        esp32_camera_url:=http://192.168.1.100:81/stream
+        baud_rate:=115200
 
 Parameters:
-    serial_port: Serial port for ESP32/Arduino (default: /dev/ttyUSB0)
+    serial_port: Serial port for Arduino (default: /dev/ttyUSB0)
     baud_rate: Serial baud rate (default: 115200)
-    esp32_camera_url: HTTP URL of ESP32-CAM MJPEG stream
 """
 
 from launch import LaunchDescription
@@ -28,7 +26,9 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch.event_handlers import OnProcessStart
 from moveit_configs_utils import MoveItConfigsBuilder
+from ament_index_python.packages import get_package_share_directory
 import os
+import yaml
 
 def generate_launch_description():
     
@@ -47,26 +47,37 @@ def generate_launch_description():
         description='Serial port baud rate'
     )
     
-    esp32_camera_url_arg = DeclareLaunchArgument(
-        'esp32_camera_url',
-        default_value='http://192.168.1.100:81/stream',
-        description='HTTP URL of ESP32-CAM MJPEG stream'
-    )
-    
-    camera_frame_arg = DeclareLaunchArgument(
-        'camera_frame',
-        default_value='camera_link',
-        description='TF frame name for the camera'
-    )
-    
     # =====================================================
     # Config Builder Setup
     # =====================================================
     moveit_config = MoveItConfigsBuilder("robotic_arm", package_name="robot_arm_moveit2").to_moveit_configs()
 
+    # Load OMPL explicit configs for MoveItPy
+    ompl_planning_yaml_file = os.path.join(
+        get_package_share_directory('robot_arm_moveit2'),
+        'config',
+        'ompl_planning.yaml'
+    )
+    with open(ompl_planning_yaml_file, 'r') as file:
+        ompl_planning_yaml = yaml.safe_load(file)
+        
+    if 'ompl' not in moveit_config.planning_pipelines:
+        moveit_config.planning_pipelines['ompl'] = ompl_planning_yaml
+
+    moveit_dict = moveit_config.to_dict()
+    # Ensure ompl parameters are properly nested under pipelines
+    if 'ompl' in ompl_planning_yaml:
+        moveit_dict['ompl'] = ompl_planning_yaml['ompl']
+
     # =====================================================
     # 1. Hardware Bringup
     # =====================================================
+    
+    ros2_controllers_path = os.path.join(
+        get_package_share_directory('robot_arm_moveit2'),
+        'config',
+        'ros2_controllers.yaml'
+    )
     
     # Robot State Publisher with URDF + xacro parameters
     robot_state_publisher = Node(
@@ -92,6 +103,7 @@ def generate_launch_description():
         executable='ros2_control_node',
         parameters=[
             moveit_config.robot_description,
+            ros2_controllers_path,
             {'use_sim_time': False},
         ],
         output='screen',
@@ -140,22 +152,21 @@ def generate_launch_description():
     )
     
     # =====================================================
-    # 2. ESP32 Camera Bridge
+    # 2. Simple USB Camera Publisher
     # =====================================================
-    esp32_camera_bridge = TimerAction(
+    camera_publisher = TimerAction(
         period=5.0,
         actions=[
             Node(
                 package='robot_arm_vision',
-                executable='esp32_camera_bridge',
-                name='esp32_camera_bridge',
+                executable='simple_camera_publisher',
+                name='camera_publisher',
                 output='screen',
                 parameters=[
-                    {'esp32_url': LaunchConfiguration('esp32_camera_url')},
-                    {'camera_frame': LaunchConfiguration('camera_frame')},
+                    {'camera_index': 0},
                     {'frame_width': 640},
                     {'frame_height': 480},
-                    # Calibration parameters - ADJUST THESE FOR YOUR CAMERA
+                    {'camera_frame': 'camera_link'},
                     {'fx': 500.0},
                     {'fy': 500.0},
                     {'cx': 320.0},
@@ -214,8 +225,10 @@ def generate_launch_description():
                 name='sorting_planner',
                 output='screen',
                 parameters=[
-                    moveit_config.to_dict(),
+                    moveit_dict,
                     {'use_sim_time': False},
+                    {'planning_pipelines': ['ompl']},
+                    {'default_planning_pipeline': 'ompl'},
                     # Target pose remap to autonomous controller
                     {'pre_grasp_hover': 0.12},
                     {'grasp_offset': 0.01},
@@ -229,14 +242,33 @@ def generate_launch_description():
     )
     
     # =====================================================
+    # 6. RViz2 Visualizer
+    # =====================================================
+    pkg_moveit_config = get_package_share_directory('robot_arm_moveit2')
+    rviz_config_file = os.path.join(pkg_moveit_config, 'config', 'moveit.rviz')
+    
+    rviz_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        output='screen',
+        arguments=['-d', rviz_config_file],
+        parameters=[
+            moveit_config.robot_description,
+            moveit_config.robot_description_semantic,
+            moveit_config.robot_description_kinematics,
+            moveit_config.planning_pipelines,
+            {'use_sim_time': False}
+        ]
+    )
+
+    # =====================================================
     # Compose Launch Description
     # =====================================================
     launch_description = LaunchDescription([
         # Arguments
         serial_port_arg,
         baud_rate_arg,
-        esp32_camera_url_arg,
-        camera_frame_arg,
         
         # Hardware Bringup
         robot_state_publisher,
@@ -245,13 +277,18 @@ def generate_launch_description():
         arm_controller,
         gripper_controller,
         
+        # Camera Publisher (early, so images are available)
+        camera_publisher,
+        
         # Mode Manager (early, so modes are always available)
         mode_manager,
         
         # Vision and Sorting (staggered start for clean initialization)
-        esp32_camera_bridge,
         vision_node,
         sorting_planner,
+        
+        # RViz
+        rviz_node,
     ])
     
     return launch_description

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-ESP32-CAM MJPEG Stream to ROS 2 Image Bridge
+USB/Laptop Camera to ROS 2 Image Bridge
 
-Connects to an ESP32-CAM running MJPEG server firmware and publishes frames
+Connects to a local webcam and publishes frames
 as ROS 2 sensor_msgs/Image with camera calibration info.
 
 Usage:
     ros2 run robot_arm_vision esp32_camera_bridge --ros-args \
-        -p esp32_url:=http://192.168.1.100:81/stream \
+        -p esp32_url:=0 \
         -p camera_frame:=camera_link
 """
 
@@ -59,7 +59,7 @@ class ESP32CameraBridge(Node):
         self.frame_count = 0
         self.last_log_time = time.time()
         
-        self.get_logger().info(f"ESP32 Camera Bridge initialized. Connecting to: {self.esp32_url}")
+        self.get_logger().info(f"Camera Bridge initialized. Connecting to source: {self.esp32_url}")
         
         # Start camera thread
         self.camera_thread = threading.Thread(target=self._camera_loop, daemon=True)
@@ -84,7 +84,7 @@ class ESP32CameraBridge(Node):
                         self.cap = None
                         time.sleep(self.reconnect_interval)
                         continue
-                    self.get_logger().info("Connected to ESP32-CAM!")
+                    self.get_logger().info("Connected to Camera!")
                 
                 ret, frame = self.cap.read()
                 if not ret or frame is None:
@@ -105,7 +105,7 @@ class ESP32CameraBridge(Node):
                 # Log status periodically
                 now = time.time()
                 if now - self.last_log_time > 5.0:
-                    self.get_logger().info(f"ESP32 Camera: {self.frame_count} frames published. Latest size: {frame.shape}")
+                    self.get_logger().info(f"Camera Bridge: {self.frame_count} frames published. Latest size: {frame.shape}")
                     self.last_log_time = now
                     
             except Exception as e:

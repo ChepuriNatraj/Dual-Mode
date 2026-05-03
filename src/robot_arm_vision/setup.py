@@ -28,9 +28,9 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'simple_camera_publisher = robot_arm_vision.simple_camera_publisher:main',
             'vision_node = robot_arm_vision.vision_node:main',
             'sorting_planner_node = robot_arm_vision.sorting_planner_node:main',
-            'esp32_camera_bridge = robot_arm_vision.esp32_camera_bridge:main'
         ],
     },
 )
