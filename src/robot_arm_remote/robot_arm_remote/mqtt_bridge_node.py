@@ -16,14 +16,13 @@ class MqttBridgeNode(Node):
         self.declare_parameter('telemetry_topic', 'natraj/robot_arm/teleop/state')
         self.declare_parameter('mqtt_timeout_sec', 3.0)
         self.declare_parameter('client_id', '')
+        
+        self.declare_parameter('arm_out_topic', '/remote_controller/joint_trajectory')
+        self.declare_parameter('gripper_out_topic', '/remote_controller/gripper_trajectory')
 
         # Unified safety bounds (must match local gesture + hardware calibration)
         self.arm_ranges = [(-3.14, 3.14), (-1.0, 1.0), (-1.0, 1.0), (-1.57, 1.57), (-1.57, 1.57)]
         self.gripper_range = (-1.0472, 0.0)
-
-        # ROS 2 Publishers to local /arm_controller & /gripper_controller
-        self.arm_pub = self.create_publisher(JointTrajectory, '/arm_controller/joint_trajectory', 10)
-        self.gripper_pub = self.create_publisher(JointTrajectory, '/gripper_controller/joint_trajectory', 10)
 
         # Read params
         self.broker = str(self.get_parameter('broker').value)
@@ -32,6 +31,13 @@ class MqttBridgeNode(Node):
         self.telemetry_topic = str(self.get_parameter('telemetry_topic').value)
         self.mqtt_timeout = float(self.get_parameter('mqtt_timeout_sec').value)
         client_id = str(self.get_parameter('client_id').value) or None
+        
+        arm_out_topic = str(self.get_parameter('arm_out_topic').value)
+        gripper_out_topic = str(self.get_parameter('gripper_out_topic').value)
+
+        # ROS 2 Publishers to remote topics (or local hardware if overridden)
+        self.arm_pub = self.create_publisher(JointTrajectory, arm_out_topic, 10)
+        self.gripper_pub = self.create_publisher(JointTrajectory, gripper_out_topic, 10)
 
         # MQTT client
         self.client = mqtt.Client(client_id=client_id)
@@ -88,7 +94,7 @@ class MqttBridgeNode(Node):
             self.rx_count += 1
             if self.rx_count % 20 == 0:
                 self.get_logger().info(f"MQTT messages received: {self.rx_count}")
-            
+
         except Exception as e:
             self.get_logger().error(f"Error parsing MQTT message: {e}")
 

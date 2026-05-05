@@ -12,6 +12,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import math
+import time
 
 mp_hands = mp.tasks.vision.HandLandmarksConnections
 mp_drawing = mp.tasks.vision.drawing_utils
@@ -27,7 +28,11 @@ class GestureControlNode(Node):
         self.declare_parameter('local_arm_topic', '/local_controller/joint_trajectory')
         self.declare_parameter('model_path', '')
         self.declare_parameter('camera_index', 0)
-        self.declare_parameter('smoothing_alpha', 0.15)
+        self.declare_parameter('smoothing_alpha', 0.08)
+        self.declare_parameter('publish_rate_hz', 10.0)
+        self.declare_parameter('deadband_rad', 0.03)
+        self.declare_parameter('max_joint_step_rad', 0.05)
+        self.declare_parameter('heartbeat_sec', 1.0)
 
         self.arm_topic = str(self.get_parameter('arm_topic').value)
         self.gripper_topic = str(self.get_parameter('gripper_topic').value)
@@ -42,8 +47,8 @@ class GestureControlNode(Node):
         if self.mirror_to_local_controller:
             self.local_arm_pub = self.create_publisher(JointTrajectory, self.local_arm_topic, 10)
         
-        # Mapping ranges (Tune these based on URDF and hardware limits)
-        self.link_1_range = [-3.14, 3.14]  # Base rotation (Expanded for full workspace access)
+        # Conservative mapping ranges reduce camera/hand jitter on real hardware.
+        self.link_1_range = [-1.57, 1.57]  # Base rotation
         self.link_2_range = [-1.0, 1.0]    # Shoulder
         self.link_3_range = [-1.0, 1.0]    # Elbow
         self.link_4_range = [-1.57, 1.57]  # Wrist flex
@@ -86,13 +91,20 @@ class GestureControlNode(Node):
         self.current_gripper_angle = 0.0
         self.alpha = float(self.get_parameter('smoothing_alpha').value)
         self.alpha = self.clamp(self.alpha, 0.01, 1.0)
+        self.publish_rate_hz = self.clamp(float(self.get_parameter('publish_rate_hz').value), 1.0, 30.0)
+        self.deadband_rad = self.clamp(float(self.get_parameter('deadband_rad').value), 0.0, 0.2)
+        self.max_joint_step_rad = self.clamp(float(self.get_parameter('max_joint_step_rad').value), 0.005, 0.3)
+        self.heartbeat_sec = self.clamp(float(self.get_parameter('heartbeat_sec').value), 0.2, 5.0)
+        self.last_published_arm_angles = self.current_arm_angles.copy()
+        self.last_published_gripper_angle = self.current_gripper_angle
+        self.last_publish_time = 0.0
 
         self.publish_count = 0
         self.last_diag_publish_count = 0
         self.seen_hand_once = False
 
         # Create ROS Timer for main loop
-        self.timer = self.create_timer(0.05, self.process_frame)
+        self.timer = self.create_timer(1.0 / self.publish_rate_hz, self.process_frame)
         self.diag_timer = self.create_timer(2.0, self.log_diagnostics)
 
     def _resolve_model_path(self):
@@ -141,6 +153,21 @@ class GestureControlNode(Node):
         point.time_from_start.nanosec = 100_000_000
         msg.points.append(point)
         self.gripper_pub.publish(msg)
+
+    def should_publish(self):
+        now = time.time()
+        arm_changed = any(
+            abs(a - b) >= self.deadband_rad
+            for a, b in zip(self.current_arm_angles, self.last_published_arm_angles)
+        )
+        gripper_changed = abs(self.current_gripper_angle - self.last_published_gripper_angle) >= self.deadband_rad
+        heartbeat_due = (now - self.last_publish_time) >= self.heartbeat_sec
+        return arm_changed or gripper_changed or heartbeat_due
+
+    def mark_published(self):
+        self.last_published_arm_angles = self.current_arm_angles.copy()
+        self.last_published_gripper_angle = self.current_gripper_angle
+        self.last_publish_time = time.time()
 
     def log_diagnostics(self):
         arm_subs = self.arm_pub.get_subscription_count()
@@ -245,15 +272,25 @@ class GestureControlNode(Node):
         else:
             display_frame = frame
 
-        # Apply exponential smoothing
+        # Apply smoothing plus step limiting so noisy camera frames cannot command jumps.
         for i in range(5):
-            self.current_arm_angles[i] = (self.alpha * target_arm_angles[i]) + ((1 - self.alpha) * self.current_arm_angles[i])
-        self.current_gripper_angle = (self.alpha * target_gripper_angle) + ((1 - self.alpha) * self.current_gripper_angle)
+            smoothed = (self.alpha * target_arm_angles[i]) + ((1 - self.alpha) * self.current_arm_angles[i])
+            delta = self.clamp(smoothed - self.current_arm_angles[i], -self.max_joint_step_rad, self.max_joint_step_rad)
+            self.current_arm_angles[i] += delta
 
-        # Publish
-        self.publish_arm_trajectory(self.current_arm_angles)
-        self.publish_gripper_trajectory(self.current_gripper_angle)
-        self.publish_count += 1
+        smoothed_gripper = (self.alpha * target_gripper_angle) + ((1 - self.alpha) * self.current_gripper_angle)
+        gripper_delta = self.clamp(
+            smoothed_gripper - self.current_gripper_angle,
+            -self.max_joint_step_rad,
+            self.max_joint_step_rad
+        )
+        self.current_gripper_angle += gripper_delta
+
+        if self.should_publish():
+            self.publish_arm_trajectory(self.current_arm_angles)
+            self.publish_gripper_trajectory(self.current_gripper_angle)
+            self.mark_published()
+            self.publish_count += 1
 
         cv2.imshow('Robot Arm Gesture Control', display_frame)
         cv2.waitKey(1)

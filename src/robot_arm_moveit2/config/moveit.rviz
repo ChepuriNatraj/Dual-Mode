@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /MotionPlanning1
         - /Camera1
-        - /Image1
       Splitter Ratio: 0.5
     Tree Height: 299
   - Class: rviz_common/Help
@@ -278,7 +277,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /camera/image_annotated
+        Value: /camera/image_raw
       Value: true
   Enabled: true
   Global Options:
@@ -313,10 +312,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3050001859664917
+      Pitch: 0.4650000333786011
       Target Frame: base_link
       Value: Orbit (rviz_default_plugins)
-      Yaw: 5.015183925628662
+      Yaw: 5.210182189941406
     Saved: ~
 Window Geometry:
   Camera:

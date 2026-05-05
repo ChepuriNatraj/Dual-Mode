@@ -12,7 +12,8 @@ setup(
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/launch', [
             'launch/sorting.launch.py',
-            'launch/hardware_sorting.launch.py'
+            'launch/hardware_sorting.launch.py',
+            'launch/hardware_blind_sorting.launch.py'
         ]),
     ],
     install_requires=['setuptools'],
@@ -31,6 +32,7 @@ setup(
             'simple_camera_publisher = robot_arm_vision.simple_camera_publisher:main',
             'vision_node = robot_arm_vision.vision_node:main',
             'sorting_planner_node = robot_arm_vision.sorting_planner_node:main',
+            'fixed_sequence_node = robot_arm_vision.fixed_sequence_node:main',
         ],
     },
 )
