@@ -1,7 +1,7 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
+from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument, AppendEnvironmentVariable
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -26,6 +26,14 @@ def generate_launch_description():
     # Gazebo Sim (Harmonic)
     pkg_robot_arm_gazebo = get_package_share_directory('robot_arm_gazebo')
     world_file = os.path.join(pkg_robot_arm_gazebo, 'worlds', 'empty_sensors.sdf')
+    
+    # Add GZ_SIM_RESOURCE_PATH to find meshes
+    share_path = os.path.abspath(os.path.join(pkg_robotic_arm_description, '..'))
+    append_gz_resource_path = AppendEnvironmentVariable(
+        'GZ_SIM_RESOURCE_PATH',
+        share_path
+    )
+    
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')
@@ -76,6 +84,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        append_gz_resource_path,
         robot_state_publisher,
         gazebo,
         spawn_entity,
